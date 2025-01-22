@@ -6,7 +6,6 @@
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
 #include <wrl/client.h>
-
 #include <unordered_map>
 #include <vector>
 #include <string>
@@ -37,6 +36,15 @@ struct SimpleConstantBuffer
 	Microsoft::WRL::ComPtr<ID3D11Buffer> ConstantBuffer = 0;
 	unsigned char* LocalDataBuffer = 0;
 	std::vector<SimpleShaderVariable> Variables;
+
+	//bool for buffer type and is it dirty
+		//per object, when object moves
+		//per material when values are changed
+		//per frame well per frame
+	bool isDirty;
+	bool isPerFrame;
+	bool isPerObject;
+	bool isPerMaterial;
 };
 
 // --------------------------------------------------------
@@ -182,9 +190,9 @@ public:
 	bool SetSamplerState(std::string name, Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState);
 
 protected:
-	bool perInstanceCompatible;
-	 Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
-	 Microsoft::WRL::ComPtr<ID3D11VertexShader> shader;
+	bool perInstanceCompatible; // If true, this shader can be used with per-instance data which means it can be used with instanced rendering 
+	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
+	Microsoft::WRL::ComPtr<ID3D11VertexShader> shader;
 	bool CreateShader(Microsoft::WRL::ComPtr<ID3DBlob> shaderBlob);
 	void SetShaderAndCBs();
 	void CleanUp();
@@ -206,117 +214,6 @@ public:
 
 protected:
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> shader;
-	bool CreateShader(Microsoft::WRL::ComPtr<ID3DBlob> shaderBlob);
-	void SetShaderAndCBs();
-	void CleanUp();
-};
-
-// --------------------------------------------------------
-// Derived class for DOMAIN shaders ///////////////////////
-// --------------------------------------------------------
-class SimpleDomainShader : public ISimpleShader
-{
-public:
-	SimpleDomainShader(Microsoft::WRL::ComPtr<ID3D11Device> device,  Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, LPCWSTR shaderFile);
-	~SimpleDomainShader();
-	Microsoft::WRL::ComPtr<ID3D11DomainShader> GetDirectXShader() { return shader; }
-
-	bool SetShaderResourceView(std::string name, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv);
-	bool SetSamplerState(std::string name, Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState);
-
-protected:
-	Microsoft::WRL::ComPtr<ID3D11DomainShader> shader;
-	bool CreateShader(Microsoft::WRL::ComPtr<ID3DBlob> shaderBlob);
-	void SetShaderAndCBs();
-	void CleanUp();
-};
-
-// --------------------------------------------------------
-// Derived class for HULL shaders /////////////////////////
-// --------------------------------------------------------
-class SimpleHullShader : public ISimpleShader
-{
-public:
-	SimpleHullShader(Microsoft::WRL::ComPtr<ID3D11Device> device,  Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, LPCWSTR shaderFile);
-	~SimpleHullShader();
-	Microsoft::WRL::ComPtr<ID3D11HullShader> GetDirectXShader() { return shader; }
-
-	bool SetShaderResourceView(std::string name, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv);
-	bool SetSamplerState(std::string name, Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState);
-
-protected:
-	Microsoft::WRL::ComPtr<ID3D11HullShader> shader;
-	bool CreateShader(Microsoft::WRL::ComPtr<ID3DBlob> shaderBlob);
-	void SetShaderAndCBs();
-	void CleanUp();
-};
-
-// --------------------------------------------------------
-// Derived class for GEOMETRY shaders /////////////////////
-// --------------------------------------------------------
-class SimpleGeometryShader : public ISimpleShader
-{
-public:
-	SimpleGeometryShader(Microsoft::WRL::ComPtr<ID3D11Device> device,  Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, LPCWSTR shaderFile, bool useStreamOut = 0, bool allowStreamOutRasterization = 0);
-	~SimpleGeometryShader();
-	Microsoft::WRL::ComPtr<ID3D11GeometryShader> GetDirectXShader() { return shader; }
-
-	bool SetShaderResourceView(std::string name, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv);
-	bool SetSamplerState(std::string name, Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState);
-
-	bool CreateCompatibleStreamOutBuffer(Microsoft::WRL::ComPtr<ID3D11Buffer> buffer, int vertexCount);
-
-	static void UnbindStreamOutStage(Microsoft::WRL::ComPtr<ID3D11DeviceContext> deviceContext);
-
-protected:
-	// Shader itself
-	Microsoft::WRL::ComPtr<ID3D11GeometryShader> shader;
-
-	// Stream out related
-	bool useStreamOut;
-	bool allowStreamOutRasterization;
-	unsigned int streamOutVertexSize;
-
-	bool CreateShader(Microsoft::WRL::ComPtr<ID3DBlob> shaderBlob);
-	bool CreateShaderWithStreamOut(Microsoft::WRL::ComPtr<ID3DBlob> shaderBlob);
-	void SetShaderAndCBs();
-	void CleanUp();
-
-	// Helpers
-	unsigned int CalcComponentCount(unsigned int mask);
-};
-
-
-// --------------------------------------------------------
-// Derived class for COMPUTE shaders //////////////////////
-// --------------------------------------------------------
-class SimpleComputeShader : public ISimpleShader
-{
-public:
-	SimpleComputeShader(Microsoft::WRL::ComPtr<ID3D11Device> device,  Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, LPCWSTR shaderFile);
-	~SimpleComputeShader();
-	Microsoft::WRL::ComPtr<ID3D11ComputeShader> GetDirectXShader() { return shader; }
-
-	void DispatchByGroups(unsigned int groupsX, unsigned int groupsY, unsigned int groupsZ);
-	void DispatchByThreads(unsigned int threadsX, unsigned int threadsY, unsigned int threadsZ);
-
-	bool HasUnorderedAccessView(std::string name);
-
-	bool SetShaderResourceView(std::string name, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv);
-	bool SetSamplerState(std::string name, Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState);
-	bool SetUnorderedAccessView(std::string name, Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> uav, unsigned int appendConsumeOffset = -1);
-
-	int GetUnorderedAccessViewIndex(std::string name);
-
-protected:
-	Microsoft::WRL::ComPtr<ID3D11ComputeShader> shader;
-	std::unordered_map<std::string, unsigned int> uavTable;
-
-	unsigned int threadsX;
-	unsigned int threadsY;
-	unsigned int threadsZ;
-	unsigned int threadsTotal;
-
 	bool CreateShader(Microsoft::WRL::ComPtr<ID3DBlob> shaderBlob);
 	void SetShaderAndCBs();
 	void CleanUp();

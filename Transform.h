@@ -35,6 +35,8 @@ public:
 	//world matrix 
 	DirectX::XMFLOAT4X4 getWorldMatrix();
 	DirectX::XMFLOAT4X4 getWorldInverseTransposeMatrix();
+	//check dirty on world
+	bool isDirtyWorld();
 
 	//camera stuff
 	DirectX::XMFLOAT3 getForward();

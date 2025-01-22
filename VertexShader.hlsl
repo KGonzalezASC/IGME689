@@ -1,17 +1,26 @@
 #include "ShaderStructs.hlsli"
 
 
-cbuffer DataFromCpu : register(b0) //register b0 is the binding point for the constant buffer setup constant buffer in game.cpp
+cbuffer PerFrameData : register(b0)
+{
+    matrix view;
+    matrix projection;
+    // matrix shadowView;
+    // matrix shadowProjection;
+}
+
+cbuffer PerObjectData : register(b1)
 {
     matrix world;
     //matrix worldInvTrans;
-	matrix view;
-	matrix projection;
-    
-    //matrix shadowView;
-    //matrix shadowProjection;
 }
 
+/*
+cbuffer PerMaterialData : register(b2)
+{
+    PBR stuff goes here
+}
+*/
 
 
 // --------------------------------------------------------

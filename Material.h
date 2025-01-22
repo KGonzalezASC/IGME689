@@ -16,6 +16,13 @@ public:
 
 
 	//gets and setters
+	//Although multiple materials may use the same vertex and pixel shader code(i.e., the same compiled shader files),
+	//each material typically has its own instance of the vertex and pixel shaders.T
+	//This allows the shaders to be applied with different parameter 
+	//values for each material instance.
+	//for any material using the same shader code, (which for now is all)
+	//the shaders is just the same instance of the shader code being called with different params
+	//on the gpu meaning that compiled instance is being reused in memory on the gpu
 	std::shared_ptr<SimplePixelShader> GetPixelShader();
 	std::shared_ptr<SimpleVertexShader> GetVertexShader();
 	DirectX::XMFLOAT3 GetColorTint();
@@ -41,6 +48,7 @@ private:
 	std::shared_ptr<SimplePixelShader> pixelShader;
 
 	const char* name;
+	bool firstPass = true; //needed for first pass of the shader so that if something is not dirty we can still see it
 };
 
 

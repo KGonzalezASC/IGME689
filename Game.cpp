@@ -210,8 +210,10 @@ void Game::Update(float deltaTime, float totalTime)
 
 	if (Input::KeyDown(VK_ESCAPE))
 		Window::Quit();
-	
-	entities[0]->GetTransform()->Rotate(0, 0, deltaTime);
+	//updates should update worldmatrix of each entity which in turns means we have to 
+	//reallocate the constant buffer for world matrix because it is per object and it is dirty
+	//stoping rotation for now to test above claim
+	//entities[0]->GetTransform()->Rotate(0, 0, deltaTime);
 	cameras[activeCamera]->Update(deltaTime);
 	updateUi(deltaTime);
 }
