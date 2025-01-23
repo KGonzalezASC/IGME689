@@ -54,15 +54,27 @@ void Material::SetColorTint(DirectX::XMFLOAT3 color)
 //LIKELY THIS AND SIMPLE SHADER NEEDS A REWRITE
 void Material::PrepareMaterial(std::shared_ptr<Transform> transform, std::shared_ptr<Camera> camera)
 {
-	// 'Turn on' these shaders
-	vertexShader->SetShader();
-	pixelShader->SetShader();
+    // 'Turn on' these shaders
+    vertexShader->SetShader();
+    pixelShader->SetShader();
 
-	vertexShader->SetMatrix4x4("world", transform->getWorldMatrix());
-	vertexShader->SetMatrix4x4("view", camera->getViewMatrix());
-	vertexShader->SetMatrix4x4("projection", camera->getProjectionMatrix());
-	vertexShader->CopyAllBufferData();
+    // Check if transform is dirty or it's the first frame
+    if (transform->isDirtyWorld() || firstPass)
+    {
+        vertexShader->SetMatrix4x4("world", transform->getWorldMatrix());
+        printf("World matrix is dirty (or first pass)\n");
+    }
 
-	pixelShader->SetFloat3("colorTint", colorTint);
-	pixelShader->CopyAllBufferData();
+    // View and projection matrices are likely per-frame and always need to be set
+    vertexShader->SetMatrix4x4("view", camera->getViewMatrix());
+    vertexShader->SetMatrix4x4("projection", camera->getProjectionMatrix());
+    vertexShader->CopyAllBufferData();
+
+    // Pixel shader settings
+    pixelShader->SetFloat3("colorTint", colorTint);
+    pixelShader->CopyAllBufferData();
+
+    // Mark the first pass as done
+    firstPass = false;
 }
+

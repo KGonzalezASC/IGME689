@@ -2,7 +2,6 @@
 #define __GPP_SHADER_STRUCTS__
 
 // Structs for various shaders
-
 // Basic VS input for a standard Pos/UV/Normal vertex
 struct VertexShaderInput
 {

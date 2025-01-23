@@ -208,6 +208,12 @@ void Transform::Scale(XMFLOAT3 scale)
 
 //world matrix
 
+//is dirty
+bool Transform::isDirtyWorld()
+{
+	return shouldUpdateWorldMatrix;
+}
+
 XMFLOAT4X4 Transform::getWorldMatrix()
 {
 	if (shouldUpdateWorldMatrix)
