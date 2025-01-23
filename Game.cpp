@@ -74,6 +74,12 @@ void Game::LoadShaders()
 		Graphics::Context, FixPath(L"PixelShader.cso").c_str());
 }
 
+void Game::LoadFBX(const std::wstring& fbxFile)
+{
+	std::shared_ptr<Mesh> animatedMesh = std::make_shared<Mesh>("Animated Mesh", fbxFile, true);
+	meshes.push_back(animatedMesh);
+	entities.push_back(std::make_shared<GameObject>(animatedMesh, materials[0]));
+}
 
 // --------------------------------------------------------
 // Creates the geometry we're going to draw TEMPORARY

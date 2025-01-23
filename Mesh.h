@@ -5,10 +5,13 @@
 #include <wrl/client.h> //comptr
 #include <fstream>
 #include <vector>
+#include "Vertex.h"
+#include <assimp/scene.h>
+#include <assimp/Importer.hpp>
+#include <assimp/postprocess.h>
 
 
 #include "Graphics.h"
-#include "Vertex.h"
 
 
 
@@ -23,6 +26,7 @@ class Mesh
     const char* name;
 
     void initBuffers(Vertex* vertices, size_t numVerts, unsigned int* indexArray, size_t numIndices);
+    void LoadFBX(const std::wstring& filePath);
 
     //copy ctor
 	//Mesh(const Mesh& mesh);
@@ -34,6 +38,8 @@ class Mesh
     Mesh(const char* name, Vertex* vertexBuffer, int, unsigned int* indexBuffer, int);
     //obj ctor
 	Mesh(const char* name, const std::wstring& objFile);
+
+    Mesh(const char* name, const std::wstring& fbxFile, bool isFBX);
 
 
     //smart pointers mean destructor can be default
