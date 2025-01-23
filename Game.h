@@ -34,6 +34,7 @@ private:
 	void LoadShaders();
 	void CreateGeometry();
 	void updateUi(float deltaTime);
+	void JoltPhysicsTest();
 
 	std::vector<std::shared_ptr<Camera>> cameras;
 	int activeCamera = 0;
