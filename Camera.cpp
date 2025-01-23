@@ -1,9 +1,9 @@
 #include "Camera.h"
-#include "Input.h"
+#include "InputManager.h"
 #include <stdio.h>
 
 
-using namespace Input;
+using namespace InputManager;
 using namespace DirectX;
 
 Camera::Camera(float aspectRatio, float x, float y, float z, float fov, float nearP, float farP, float mSpeed, float lSpeed)
@@ -67,37 +67,37 @@ void Camera::Update(float dt) {
 	//printf("Projection Matrix: %f, %f, %f, %f\n", projectionMatrix._11, projectionMatrix._12, projectionMatrix._13, projectionMatrix._14);
 	relativeMotion.setPosition(0, 0, 0);
 	float speed = dt * movementSpeed;
-	if (Input::KeyDown('W') || Input::KeyDown(VK_UP)) {
+	if (InputManager::KeyDown('W') || InputManager::KeyDown(VK_UP)) {
 		transform.moveRelative(0, 0, speed);
 		relativeMotion.moveAbsolute(relativeMotion.getPosition().x, relativeMotion.getPosition().y, speed);
 	}
-	if (Input::KeyDown('S') || Input::KeyDown(VK_DOWN)) {
+	if (InputManager::KeyDown('S') || InputManager::KeyDown(VK_DOWN)) {
 		transform.moveRelative(0, 0, -speed);
 		relativeMotion.moveAbsolute(relativeMotion.getPosition().x, relativeMotion.getPosition().y, -speed);
 	}
-	if (Input::KeyDown('A') || Input::KeyDown(VK_LEFT)) {
+	if (InputManager::KeyDown('A') || InputManager::KeyDown(VK_LEFT)) {
 		transform.moveRelative(-speed, 0, 0);
 		relativeMotion.moveAbsolute(-speed, relativeMotion.getPosition().y, relativeMotion.getPosition().z);
 	}
-	if (Input::KeyDown('D') || Input::KeyDown(VK_RIGHT)) {
+	if (InputManager::KeyDown('D') || InputManager::KeyDown(VK_RIGHT)) {
 		transform.moveRelative(speed, 0, 0);
 		relativeMotion.moveAbsolute(speed, relativeMotion.getPosition().y, relativeMotion.getPosition().z);
 	}
 
 	//use q and e to move up and down
-	if (Input::KeyDown('X')) {
+	if (InputManager::KeyDown('X')) {
 		transform.moveRelative(0, -speed, 0);
 		relativeMotion.moveAbsolute(relativeMotion.getPosition().x, -speed, relativeMotion.getPosition().z);
 	}
-	if (Input::KeyDown(VK_SPACE)) {
+	if (InputManager::KeyDown(VK_SPACE)) {
 		transform.moveRelative(0, speed, 0);
 		relativeMotion.moveAbsolute(relativeMotion.getPosition().x, speed, relativeMotion.getPosition().z);
 	}
 
 	//use mouse to look around if mouse is down
-	if (Input::MouseLeftDown()) {
-		int cursorMovementX = Input::GetMouseXDelta();  //make float
-		int cursorMovementY = Input::GetMouseYDelta();
+	if (InputManager::MouseLeftDown()) {
+		int cursorMovementX = InputManager::GetMouseXDelta();  //make float
+		int cursorMovementY = InputManager::GetMouseYDelta();
 		transform.Rotate(cursorMovementY * mouseLookSpeed, (cursorMovementX * mouseLookSpeed), 0);
 		relativeMotion.moveAbsolute(cursorMovementX * mouseLookSpeed * 2, cursorMovementY * mouseLookSpeed * 2, 0);
 	}

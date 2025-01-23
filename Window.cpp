@@ -1,7 +1,7 @@
 
 #include "Window.h"
 #include "Graphics.h"
-#include "Input.h"
+#include "InputManager.h"
 #include <sstream>
 
 #include "ImGui/imgui_impl_win32.h"
@@ -305,7 +305,7 @@ LRESULT Window::ProcessMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 
 		// Has the mouse wheel been scrolled?
 	case WM_MOUSEWHEEL:
-		Input::SetWheelDelta(GET_WHEEL_DELTA_WPARAM(wParam) / (float)WHEEL_DELTA);
+		InputManager::SetWheelDelta(GET_WHEEL_DELTA_WPARAM(wParam) / (float)WHEEL_DELTA);
 		return 0;
 
 		// Is our focus state changing?

@@ -1,7 +1,7 @@
 #include "Game.h"
 #include "Graphics.h"
 #include "Vertex.h"
-#include "Input.h"
+#include "InputManager.h"
 #include "PathHelpers.h"
 #include "Window.h"
 #include "Camera.h"
@@ -116,8 +116,8 @@ void Game:: updateUi(float deltaTime) {
 	ImGui::NewFrame();
 
 	//Determine the new input capture state which is what the user is currently doing
-	Input::SetKeyboardCapture(io.WantCaptureKeyboard); // make sure no ! flag on this..
-	Input::SetMouseCapture(io.WantCaptureMouse);
+	InputManager::SetKeyboardCapture(io.WantCaptureKeyboard); // make sure no ! flag on this..
+	InputManager::SetMouseCapture(io.WantCaptureMouse);
 
 	//create window, second param appears to save last window size?
 	ImGui::SetNextWindowSize(ImVec2(300, 200), ImGuiCond_FirstUseEver);
@@ -208,7 +208,7 @@ void Game:: updateUi(float deltaTime) {
 void Game::Update(float deltaTime, float totalTime)
 {
 
-	if (Input::KeyDown(VK_ESCAPE))
+	if (InputManager::KeyDown(VK_ESCAPE))
 		Window::Quit();
 	//updates should update worldmatrix of each entity which in turns means we have to 
 	//reallocate the constant buffer for world matrix because it is per object and it is dirty
