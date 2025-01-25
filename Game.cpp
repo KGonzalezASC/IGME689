@@ -90,7 +90,8 @@ void Game::CreateGeometry()
 	{
 		for (auto& mesh : meshes)
 		{
-			entities.push_back(std::make_shared<GameObject>(mesh,materials[0]));
+			entities.push_back(std::make_shared<GameObject>(mesh, materials[0]));
+			entities.push_back(std::make_shared<GameObject>(mesh, materials[0]));
 		}
 	}
 }
@@ -199,6 +200,12 @@ void Game:: updateUi(float deltaTime) {
 		showDemoWindow = !showDemoWindow; 
 	}
 
+	if (ImGui::Button("Run Physics"))
+	{
+		runPhysics = true;
+		timeSincePhysicsStep = 0.f;
+	}
+
 	//close window
 	ImGui::End();
 }
@@ -219,10 +226,16 @@ void Game::Update(float deltaTime, float totalTime)
 	cameras[activeCamera]->Update(deltaTime);
 	updateUi(deltaTime);
 
-	if (Input::KeyDown(VK_DELETE))
+	
+	timeSincePhysicsStep += deltaTime;
+
+	while (timeSincePhysicsStep >= cDeltaTime && runPhysics)
 	{
 		JoltPhysicsFrame();
+		timeSincePhysicsStep -= cDeltaTime;
 	}
+
+
 }
 
 
@@ -304,21 +317,6 @@ void Game::JoltPhysicsTest()
 	// of your own job scheduler. JobSystemThreadPool is an example implementation.
 	job_system = new JobSystemThreadPool(cMaxPhysicsJobs, cMaxPhysicsBarriers, thread::hardware_concurrency() - 1);
 
-	// Create mapping table from object layer to broadphase layer
-	// Note: As this is an interface, PhysicsSystem will take a reference to this so this instance needs to stay alive!
-	// Also have a look at BroadPhaseLayerInterfaceTable or BroadPhaseLayerInterfaceMask for a simpler interface.
-	BPLayerInterfaceImpl broad_phase_layer_interface;
-
-	// Create class that filters object vs broadphase layers
-	// Note: As this is an interface, PhysicsSystem will take a reference to this so this instance needs to stay alive!
-	// Also have a look at ObjectVsBroadPhaseLayerFilterTable or ObjectVsBroadPhaseLayerFilterMask for a simpler interface.
-	ObjectVsBroadPhaseLayerFilterImpl object_vs_broadphase_layer_filter;
-
-	// Create class that filters object vs object layers
-	// Note: As this is an interface, PhysicsSystem will take a reference to this so this instance needs to stay alive!
-	// Also have a look at ObjectLayerPairFilterTable or ObjectLayerPairFilterMask for a simpler interface.
-	ObjectLayerPairFilterImpl object_vs_object_layer_filter;
-
 	// We need a temp allocator for temporary allocations during the physics update. We're
 	// pre-allocating 10 MB to avoid having to do allocations during the physics update.
 	// B.t.w. 10 MB is way too much for this example but it is a typical value you can use.
@@ -332,14 +330,14 @@ void Game::JoltPhysicsTest()
 	// A body activation listener gets notified when bodies activate and go to sleep
 	// Note that this is called from a job so whatever you do here needs to be thread safe.
 	// Registering one is entirely optional.
-	MyBodyActivationListener body_activation_listener;
-	physics_system.SetBodyActivationListener(&body_activation_listener);
+	//MyBodyActivationListener body_activation_listener;
+	//physics_system.SetBodyActivationListener(&body_activation_listener);
 
 	// A contact listener gets notified when bodies (are about to) collide, and when they separate again.
 	// Note that this is called from a job so whatever you do here needs to be thread safe.
 	// Registering one is entirely optional.
-	MyContactListener contact_listener;
-	physics_system.SetContactListener(&contact_listener);
+	//MyContactListener contact_listener;
+	//physics_system.SetContactListener(&contact_listener);
 
 	// The main way to interact with the bodies in the physics system is through the body interface. There is a locking and a non-locking
 	// variant of this. We're going to use the locking version (even though we're not planning to access bodies from multiple threads)
@@ -356,7 +354,7 @@ void Game::JoltPhysicsTest()
 	ShapeRefC floor_shape = floor_shape_result.Get(); // We don't expect an error here, but you can check floor_shape_result for HasError() / GetError()
 
 	// Create the settings for the body itself. Note that here you can also set other properties like the restitution / friction.
-	BodyCreationSettings floor_settings(floor_shape, RVec3(0.0_r, -1.0_r, 0.0_r), Quat::sIdentity(), EMotionType::Static, Layers::NON_MOVING);
+	BodyCreationSettings floor_settings(floor_shape, RVec3(0.0_r, -5.0_r, 0.0_r), Quat::sIdentity(), EMotionType::Static, Layers::NON_MOVING);
 
 	// Create the actual rigid body
 	floor = body_interface->CreateBody(floor_settings); // Note that if we run out of bodies this can return nullptr
@@ -368,6 +366,9 @@ void Game::JoltPhysicsTest()
 	// Note that this uses the shorthand version of creating and adding a body to the world
 	BodyCreationSettings sphere_settings(new SphereShape(0.5f), RVec3(0.0_r, 2.0_r, 0.0_r), Quat::sIdentity(), EMotionType::Dynamic, Layers::MOVING);
 	sphere_id = body_interface->CreateAndAddBody(sphere_settings, EActivation::Activate);
+
+	BodyCreationSettings sphere_settings2(new SphereShape(0.5f), RVec3(0.1_r, 0.0_r, 0.1_r), Quat::sIdentity(), EMotionType::Dynamic, Layers::MOVING);
+	sphere_id2 = body_interface->CreateAndAddBody(sphere_settings2, EActivation::Activate);
 
 	// Now you can interact with the dynamic body, in this case we're going to give it a velocity.
 	// (note that if we had used CreateBody then we could have set the velocity straight on the body before adding it to the physics system)
@@ -415,8 +416,19 @@ void Game::JoltPhysicsFrame()
 
 	// Output current position and velocity of the sphere
 	RVec3 position = body_interface->GetCenterOfMassPosition(sphere_id);
+	Vec3 rotation = body_interface->GetRotation(sphere_id).GetEulerAngles();
 	Vec3 velocity = body_interface->GetLinearVelocity(sphere_id);
 	cout << "Step " << step << ": Position = (" << position.GetX() << ", " << position.GetY() << ", " << position.GetZ() << "), Velocity = (" << velocity.GetX() << ", " << velocity.GetY() << ", " << velocity.GetZ() << ")" << endl;
+	
+	entities[0]->GetTransform()->setPosition(position.GetX(), position.GetY(), position.GetZ());
+	entities[0]->GetTransform()->setRotation(rotation.GetX(),rotation.GetY(), rotation.GetZ());
+
+	//---------------------------
+	position = body_interface->GetCenterOfMassPosition(sphere_id2);
+	rotation = body_interface->GetRotation(sphere_id2).GetEulerAngles();
+
+	entities[1]->GetTransform()->setPosition(position.GetX(), position.GetY(), position.GetZ());
+	entities[1]->GetTransform()->setRotation(rotation.GetX(), rotation.GetY(), rotation.GetZ());
 
 	// If you take larger steps than 1 / 60th of a second you need to do multiple collision steps in order to keep the simulation stable. Do 1 collision step per 1 / 60th of a second (round up).
 	const int cCollisionSteps = 1;

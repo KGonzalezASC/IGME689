@@ -51,92 +51,6 @@ using namespace JPH::literals;
 // We're also using STL classes in this example
 using namespace std;
 
-class Game
-{
-public:
-	Game() = default;
-	~Game();
-	Game(const Game&) = delete; // Remove copy constructor
-	Game& operator=(const Game&) = delete; // Remove copy-assignment operator
-
-	// Primary functions
-	void Initialize();
-	void Update(float deltaTime, float totalTime);
-	void Draw(float deltaTime, float totalTime);
-	void OnResize();
-
-private:
-
-	// Initialization helper methods - feel free to customize, combine, remove, etc.
-	void LoadShaders();
-	void CreateGeometry();
-	void updateUi(float deltaTime);
-	void JoltPhysicsTest();
-
-	void JoltPhysicsFrame();
-	void DeInitPhysics();
-
-	std::vector<std::shared_ptr<Camera>> cameras;
-	int activeCamera = 0;
-
-
-
-	//Meshes shared smart pointer
-	std::vector<std::shared_ptr<Mesh>> meshes;
-	std::vector<std::shared_ptr<GameObject>> entities;
-	std::vector<std::shared_ptr<Material>> materials;
-
-
-	// Shaders and shader-related constructs
-	std::shared_ptr<SimplePixelShader> pixelShader;
-	std::shared_ptr<SimpleVertexShader> vertexShader;
-	std::shared_ptr<SimplePixelShader> uvPixelShader;
-	std::shared_ptr<SimplePixelShader> normalPixelShader;
-	std::shared_ptr<SimplePixelShader> customPixelShader;
-
-	
-
-
-	//ImGui
-	bool showDemoWindow = false;
-	float bgColor[4] = { 0.45f, 0.55f, 0.60f, 1.00f }; // Background color
-	float tintColor[4] = {1.0f, 1.0f, 1.0f, 1.0f}; // Tint color
-
-//-------------JoltPhysics-------------------
-
-	// This is the max amount of rigid bodies that you can add to the physics system. If you try to add more you'll get an error.
-	// Note: This value is low because this is a simple test. For a real project use something in the order of 65536.
-	const uint cMaxBodies = 1024;
-
-	// This determines how many mutexes to allocate to protect rigid bodies from concurrent access. Set it to 0 for the default settings.
-	const uint cNumBodyMutexes = 0;
-
-	// This is the max amount of body pairs that can be queued at any time (the broad phase will detect overlapping
-	// body pairs based on their bounding boxes and will insert them into a queue for the narrowphase). If you make this buffer
-	// too small the queue will fill up and the broad phase jobs will start to do narrow phase work. This is slightly less efficient.
-	// Note: This value is low because this is a simple test. For a real project use something in the order of 65536.
-	const uint cMaxBodyPairs = 1024;
-
-	// This is the maximum size of the contact constraint buffer. If more contacts (collisions between bodies) are detected than this
-	// number then these contacts will be ignored and bodies will start interpenetrating / fall through the world.
-	// Note: This value is low because this is a simple test. For a real project use something in the order of 10240.
-	const uint cMaxContactConstraints = 1024;
-
-	PhysicsSystem physics_system;
-	BodyInterface* body_interface;
-	BodyID sphere_id;
-	Body* floor;
-
-	TempAllocatorImpl* temp_allocator;
-	JobSystemThreadPool* job_system;
-
-	uint step = 0;
-
-	// We simulate the physics world in discrete time steps. 60 Hz is a good rate to update the physics system.
-	const float cDeltaTime = 1.0f / 60.0f;
-};
-
-
 #pragma region JoltPhysicsStuffToMove
 // Callback for traces, connect this to your own trace function if you have one
 static void TraceImpl(const char* inFMT, ...)
@@ -310,3 +224,110 @@ public:
 	}
 };
 #pragma endregion
+
+class Game
+{
+public:
+	Game() = default;
+	~Game();
+	Game(const Game&) = delete; // Remove copy constructor
+	Game& operator=(const Game&) = delete; // Remove copy-assignment operator
+
+	// Primary functions
+	void Initialize();
+	void Update(float deltaTime, float totalTime);
+	void Draw(float deltaTime, float totalTime);
+	void OnResize();
+
+private:
+
+	// Initialization helper methods - feel free to customize, combine, remove, etc.
+	void LoadShaders();
+	void CreateGeometry();
+	void updateUi(float deltaTime);
+	void JoltPhysicsTest();
+
+	void JoltPhysicsFrame();
+	void DeInitPhysics();
+
+	std::vector<std::shared_ptr<Camera>> cameras;
+	int activeCamera = 0;
+
+
+
+	//Meshes shared smart pointer
+	std::vector<std::shared_ptr<Mesh>> meshes;
+	std::vector<std::shared_ptr<GameObject>> entities;
+	std::vector<std::shared_ptr<Material>> materials;
+
+
+	// Shaders and shader-related constructs
+	std::shared_ptr<SimplePixelShader> pixelShader;
+	std::shared_ptr<SimpleVertexShader> vertexShader;
+	std::shared_ptr<SimplePixelShader> uvPixelShader;
+	std::shared_ptr<SimplePixelShader> normalPixelShader;
+	std::shared_ptr<SimplePixelShader> customPixelShader;
+
+	
+
+
+	//ImGui
+	bool showDemoWindow = false;
+	float bgColor[4] = { 0.45f, 0.55f, 0.60f, 1.00f }; // Background color
+	float tintColor[4] = {1.0f, 1.0f, 1.0f, 1.0f}; // Tint color
+
+//-------------JoltPhysics-------------------
+
+	// This is the max amount of rigid bodies that you can add to the physics system. If you try to add more you'll get an error.
+	// Note: This value is low because this is a simple test. For a real project use something in the order of 65536.
+	const uint cMaxBodies = 1024;
+
+	// This determines how many mutexes to allocate to protect rigid bodies from concurrent access. Set it to 0 for the default settings.
+	const uint cNumBodyMutexes = 0;
+
+	// This is the max amount of body pairs that can be queued at any time (the broad phase will detect overlapping
+	// body pairs based on their bounding boxes and will insert them into a queue for the narrowphase). If you make this buffer
+	// too small the queue will fill up and the broad phase jobs will start to do narrow phase work. This is slightly less efficient.
+	// Note: This value is low because this is a simple test. For a real project use something in the order of 65536.
+	const uint cMaxBodyPairs = 1024;
+
+	// This is the maximum size of the contact constraint buffer. If more contacts (collisions between bodies) are detected than this
+	// number then these contacts will be ignored and bodies will start interpenetrating / fall through the world.
+	// Note: This value is low because this is a simple test. For a real project use something in the order of 10240.
+	const uint cMaxContactConstraints = 1024;
+
+	// Create mapping table from object layer to broadphase layer
+	// Note: As this is an interface, PhysicsSystem will take a reference to this so this instance needs to stay alive!
+	// Also have a look at BroadPhaseLayerInterfaceTable or BroadPhaseLayerInterfaceMask for a simpler interface.
+	BPLayerInterfaceImpl broad_phase_layer_interface;
+
+	// Create class that filters object vs broadphase layers
+	// Note: As this is an interface, PhysicsSystem will take a reference to this so this instance needs to stay alive!
+	// Also have a look at ObjectVsBroadPhaseLayerFilterTable or ObjectVsBroadPhaseLayerFilterMask for a simpler interface.
+	ObjectVsBroadPhaseLayerFilterImpl object_vs_broadphase_layer_filter;
+
+	// Create class that filters object vs object layers
+	// Note: As this is an interface, PhysicsSystem will take a reference to this so this instance needs to stay alive!
+	// Also have a look at ObjectLayerPairFilterTable or ObjectLayerPairFilterMask for a simpler interface.
+	ObjectLayerPairFilterImpl object_vs_object_layer_filter;
+
+	PhysicsSystem physics_system;
+	BodyInterface* body_interface;
+	BodyID sphere_id;
+	BodyID sphere_id2;
+	Body* floor;
+
+	TempAllocatorImpl* temp_allocator;
+	JobSystemThreadPool* job_system;
+
+	uint step = 0;
+
+	// We simulate the physics world in discrete time steps. 60 Hz is a good rate to update the physics system.
+	const float cDeltaTime = 1.0f / 60.0f;
+
+	float timeSincePhysicsStep = 0.f;
+
+	bool runPhysics = false;
+};
+
+
