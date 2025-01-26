@@ -11,7 +11,7 @@
 constexpr WORD   BITSPERSSAMPLE = 16;                                                    // 16 bits per sample.
 constexpr DWORD  SAMPLESPERSEC = 44100;                                                  // 44,100 samples per second.
 constexpr double CYCLESPERSEC = 220.0;                                                   // 220 cycles per second (frequency of the audible tone).
-constexpr double VOLUME = 0.5;                                                           // 50% volume.
+constexpr double VOLUME = 0.5;                                                           // 50% volume. Potentially better practice to set this value in the game loop?
 constexpr WORD   AUDIOBUFFERSIZEINCYCLES = 10;                                           // 10 cycles per audio buffer.
 constexpr double PI = 3.14159265358979323846;
 constexpr WORD   NUM_CHANNELS = 1;														 // 1 audio channel to test.
@@ -46,6 +46,13 @@ struct XAudioVoice : IXAudio2VoiceCallback
 	{
 		playing = true;
 	}
+
+	// Methods that need to be defined but not scripted, could do cool stuff with them later
+	void OnVoiceProcessingPassEnd() noexcept {}
+	void OnVoiceProcessingPassStart(UINT32 SamplesRequired) noexcept {}
+	void OnBufferEnd(void *pBufferContext) noexcept {}
+	void OnLoopEnd(void* pBufferContext) noexcept {}
+	void OnVoiceError(void* pBufferContext, HRESULT error) noexcept {}
 };
 
 class AudioManager
@@ -53,7 +60,7 @@ class AudioManager
 public:
 	AudioManager();
 	~AudioManager();
-	void play_sound(char* soundName);
+	void playSound(char* soundName);
 	void update_audio();
 
 private:

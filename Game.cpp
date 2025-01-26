@@ -5,6 +5,7 @@
 #include "PathHelpers.h"
 #include "Window.h"
 #include "Camera.h"
+#include "AudioManager.h"
 #include <DirectXMath.h>
 
 // Needed for a helper function to load pre-compiled shader files
@@ -47,6 +48,9 @@ void Game::Initialize()
 	std::shared_ptr<Camera> camera2 = std::make_shared<Camera>(Window::AspectRatio(), XMFLOAT3(0.5f, 0.0f, -15.0f), XM_PIDIV4, 0.01f, 1000.0f, 5.0f, 0.0055f);
 	camera2.get()->getTransform().moveRelative(0.5f, 0.0f, 0.0f);
 	cameras.push_back(camera2);
+
+	// Set up AudioManager
+	audio = std::make_shared<AudioManager>();
 }
 
 

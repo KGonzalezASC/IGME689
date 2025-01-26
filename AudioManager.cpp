@@ -2,7 +2,11 @@
 
 AudioManager::AudioManager()
 {
-	init();
+	bool initSuccess = init();
+	if (!initSuccess)
+	{
+		// TODO: Throw error if initialization failed
+	}
 }
 
 bool AudioManager::init()
@@ -30,13 +34,15 @@ bool AudioManager::init()
 	wave.nBlockAlign = NUM_CHANNELS * BITSPERSSAMPLE / 8;
 	wave.nAvgBytesPerSec = SAMPLESPERSEC * wave.nBlockAlign;
 
-	// Initialize the voice array
+	// Initialize the array of voices
 	for (int idx = 0; idx < MAXCONCURRENTSOUNDS; idx++)
 	{
 		XAudioVoice* voice = &voiceArr[idx];
+		hr = xAudio2->CreateSourceVoice(&voice->voice, &wave, 0, XAUDIO2_DEFAULT_FREQ_RATIO, voice);
+		voice->voice->SetVolume(VOLUME);
+		if (FAILED(hr)) return false;
 	}
 
 	// Everything has been set up successfully, return true
 	return true;
-
 }

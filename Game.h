@@ -14,6 +14,9 @@
 #include "ImGui/imgui_impl_dx11.h"
 #include "ImGui/imgui_impl_win32.h"
 
+
+#include "AudioManager.h"
+
 class Game
 {
 public:
@@ -60,5 +63,8 @@ private:
 	bool showDemoWindow = false;
 	float bgColor[4] = { 0.45f, 0.55f, 0.60f, 1.00f }; // Background color
 	float tintColor[4] = {1.0f, 1.0f, 1.0f, 1.0f}; // Tint color
+
+	// AudioManager
+	std::shared_ptr<AudioManager> audio;
 };
 
