@@ -35,7 +35,7 @@ bool AudioManager::init()
 	wave.nAvgBytesPerSec = SAMPLESPERSEC * wave.nBlockAlign;
 
 	// Initialize the array of voices
-	for (int idx = 0; idx < MAXCONCURRENTSOUNDS; idx++)
+	for (int idx = 0; idx < MAX_CONCURRENT_SOUNDS; idx++)
 	{
 		XAudioVoice* voice = &voiceArr[idx];
 		hr = xAudio2->CreateSourceVoice(&voice->voice, &wave, 0, XAUDIO2_DEFAULT_FREQ_RATIO, voice);
@@ -45,4 +45,17 @@ bool AudioManager::init()
 
 	// Everything has been set up successfully, return true
 	return true;
+}
+
+void AudioManager::update_audio(float dt)
+{
+	// Check every actively playing sound
+	for (int soundIdx = 0; soundIdx < soundState.playingSounds.size(); soundIdx++)
+	{
+		Sound& sound = soundState.playingSounds[soundIdx];
+		// Check if the sound actually has data
+		
+		// TO-DO: Tutorial has sound options, implement similar functionality
+
+	}
 }
