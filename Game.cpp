@@ -83,12 +83,15 @@ void Game::CreateGeometry()
 	{
 		std::shared_ptr<Mesh> cube = std::make_shared<Mesh>("cube", FixPath(L"../../Assets/Models/cube.obj").c_str());
 		meshes.push_back(cube);
+		meshes.push_back(cube);
 	}
 	//TODO REORDER WHERE GEOMETRY COMES BEFORE MATERIALS AND ASSIGN SUCH IN INIT. THIS IS BECAUSE THE SKYBOX needs geometry for the cube map
 	{
 		for (auto& mesh : meshes)
 		{
-			entities.push_back(std::make_shared<GameObject>(mesh,materials[0]));
+			entities.push_back(std::make_shared<GameObject>(mesh, materials[0]));
+			entities.push_back(std::make_shared<GameObject>(mesh, materials[0]));
+			entities[1]->GetTransform()->setPosition(XMFLOAT3(5, 0, 0));
 		}
 	}
 }

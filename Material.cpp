@@ -61,9 +61,10 @@ void Material::PrepareMaterial(std::shared_ptr<Transform> transform, std::shared
     // Check if transform is dirty or it's the first frame
     if (transform->isDirtyWorld() || firstPass)
     {
-        vertexShader->SetMatrix4x4("world", transform->getWorldMatrix());
         printf("World matrix is dirty (or first pass)\n");
     }
+
+    vertexShader->SetMatrix4x4("world", transform->getWorldMatrix());
 
     // View and projection matrices are likely per-frame and always need to be set
     vertexShader->SetMatrix4x4("view", camera->getViewMatrix());
