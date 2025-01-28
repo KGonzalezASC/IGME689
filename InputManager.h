@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Windows.h>
+#include "InputActionManager.h"
 
 // Manages inputs from connected devices
 namespace InputManager

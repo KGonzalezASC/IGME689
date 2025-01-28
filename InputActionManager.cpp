@@ -2,24 +2,65 @@
 
 namespace InputActionManager
 {
-	//void Initialize()
-	//{
-	//	using BindingPair = std::pair<InputBindingType, uint16_t>;
+	std::unordered_map<std::wstring, InputAction> actions;
+	std::unordered_map<InputBindings, std::pair<InputBindingType, uint16_t>> bindings;
+	std::unordered_map<InputBindings, std::unordered_set<InputAction, InputActionHash>> actionBindings;
 
-	//	bindings.clear();
+	// ===== | Structs | =====
+	struct InputAction
+	{
+		wchar_t* name;
+		std::vector<ActionEvent> OnTrigger;
 
-	//	// Helper lambdas to add keyboard/mouse entries more succinctly
-	//	auto addKey = [&](InputBindings binding, uint16_t vkCode) {
-	//		bindings.emplace(binding, BindingPair(Keyboard, vkCode));
-	//		};
-	//	auto addMouse = [&](InputBindings binding, uint16_t vkCode) {
-	//		bindings.emplace(binding, BindingPair(Mouse, vkCode));
-	//		};
-	//}
+		InputAction(const wchar_t* name)
+		{
+			this->name = new wchar_t[wcslen(name) + 1];
+			wcscpy_s(this->name, wcslen(name) + 1, name);
+		}
+
+		~InputAction()
+		{
+			delete[] name;
+		}
+
+		bool operator==(const InputAction& other) const
+		{
+			return wcscmp(name, other.name) == 0;
+		}
+	};
+
+	struct InputData
+	{
+		InputType inputType;
+		InputBindings key;
+	};
+
+	struct InputActionHash
+	{
+		std::size_t operator()(const InputAction& action) const
+		{
+			return std::hash<std::wstring>()(action.name);
+		}
+	};
+
+	void Initialize()
+	{
+		using BindingPair = std::pair<InputBindingType, uint16_t>;
+
+		bindings.clear();
+
+		// Helper lambdas to add keyboard/mouse entries more succinctly
+		auto addKey = [&](InputBindings binding, uint16_t vkCode) {
+			bindings.emplace(binding, BindingPair(Keyboard, vkCode));
+			};
+		auto addMouse = [&](InputBindings binding, uint16_t vkCode) {
+			bindings.emplace(binding, BindingPair(Mouse, vkCode));
+			};
+	}
 
 	void CreateAction(const wchar_t* name)
 	{
-		//actions.insert(std::make_pair(name, InputAction(name)));
+		actions.insert(std::make_pair(name, InputAction(name)));
 	}
 
 	InputAction& GetAction(std::wstring name)
@@ -27,16 +68,31 @@ namespace InputActionManager
 		return actions.at(name);
 	}
 
-	void AssignKeyToAction(std::wstring actionName, InputBindings key)
+	void AssignBindingToAction(std::wstring actionName, InputBindings key)
 	{
-		//actions.at(actionName).keys.push_back(key);
+		actionBindings[key].insert(actions.at(actionName));
 	}
 
-	void RemoveKeyFromAction(std::wstring actionName, InputBindings key)
+	void RemoveBindingFromAction(std::wstring actionName, InputBindings key)
 	{
-		//auto& action = actions.at(actionName);
-		//action.keys.erase(std::remove(action.keys.begin(), action.keys.end(), key), action.keys.end());
+		//actionBindings[key].erase(actions.at(actionName));
 	}
+
+	void CheckActionBindings()
+	{
+		// Loop through all the bindings in actionBindings
+		for (auto& binding : actionBindings)
+		{
+			InputBindings input = binding.first;
+			
+
+
+			// Loop through all the actions associated with this binding
+			for (auto& action : binding.second)
+			{
+				
+			}
+		}
 
 	enum InputBindings
 	{

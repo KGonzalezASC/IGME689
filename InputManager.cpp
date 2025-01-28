@@ -32,6 +32,9 @@ void InputManager::Initialize(HWND windowHandle)
 	mouse.dwFlags = RIDEV_INPUTSINK;
 	mouse.hwndTarget = windowHandle;
 	RegisterRawInputDevices(&mouse, 1, sizeof(mouse));
+
+	// ND: Initialize the Action Manager
+	InputActionManager::Initialize();
 }
 
 // ---------------------------------------------------

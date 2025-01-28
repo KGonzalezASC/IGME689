@@ -1,8 +1,10 @@
 #pragma once
 #include <unordered_map>
+#include <unordered_set>
 #include <functional>
 #include <string>
 
+#include "InputManager.h"
 
 namespace InputActionManager
 {
@@ -15,45 +17,37 @@ namespace InputActionManager
 	};
 	enum InputType
 	{
+		Up,
 		Down,
 		Pressed,
-		Released
+		Released,
 	};
 
 	typedef std::function<void()> ActionEvent;
 
 	// ===== | Structs | =====
-	struct InputAction
-	{
-		wchar_t* name;
-		std::vector<ActionEvent> OnTrigger;
+	struct InputAction;
 
-		InputAction(const wchar_t* name)
-		{
-			this->name = new wchar_t[wcslen(name) + 1];
-			wcscpy_s(this->name, wcslen(name) + 1, name);
-		}
+	struct InputData;
 
-		~InputAction()
-		{
-			delete[] name;
-		}
-	};
-
-	struct InputData
-	{
-		InputType inputType;
-		InputBindings key;
-	};
+	struct InputActionHash;
 
 	// ===== | Methods | =====
 	void Initialize();
+	// Create a new action an add it to the actions map
 	void CreateAction(const wchar_t* name);
+	// Gets an action from the actions map by name
 	InputAction& GetAction(std::wstring name);
-	void AssignKeyToAction(std::wstring actionName, InputBindings key);
-	void RemoveKeyFromAction(std::wstring actionName, InputBindings key);
+	// Takes a inputBining and assosiates it with an action
+	void AssignBindingToAction(std::wstring actionName, InputBindings key);
+	// Disassociates a key from an action
+	void RemoveBindingFromAction(std::wstring actionName, InputBindings key);
+	// Checks if a key assosiated to a binding is has been iteracted with
+	void CheckActionBindings();
 
 	// ===== | Variables | =====
-	std::unordered_map<std::wstring, InputAction> actions;
-	std::unordered_map<InputBindings, std::pair<InputBindingType, uint16_t>> bindings;
+
+	extern std::unordered_map<std::wstring, InputAction> actions;
+	extern std::unordered_map<InputBindings, std::pair<InputBindingType, uint16_t>> bindings;
+	extern std::unordered_map<InputBindings, std::unordered_set<InputAction, InputActionHash>> actionBindings;
 }
