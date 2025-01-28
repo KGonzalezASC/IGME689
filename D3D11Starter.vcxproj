@@ -183,6 +183,7 @@
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="PathHelpers.cpp" />
+    <ClCompile Include="PhysicsManager.cpp" />
     <ClCompile Include="Physics\Jolt\AABBTree\AABBTreeBuilder.cpp" />
     <ClCompile Include="Physics\Jolt\Core\Color.cpp" />
     <ClCompile Include="Physics\Jolt\Core\Factory.cpp" />
@@ -341,6 +342,7 @@
     <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="PathHelpers.h" />
+    <ClInclude Include="PhysicsManager.h" />
     <ClInclude Include="Physics\Jolt\AABBTree\AABBTreeBuilder.h" />
     <ClInclude Include="Physics\Jolt\AABBTree\AABBTreeToBuffer.h" />
     <ClInclude Include="Physics\Jolt\AABBTree\NodeCodec\NodeCodecQuadTreeHalfFloat.h" />
