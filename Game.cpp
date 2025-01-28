@@ -34,7 +34,8 @@ void Game::Initialize()
 	materials.insert(materials.end(), { redMaterial});
 
 
-	CreateGeometry(); //updating for A03
+	//CreateGeometry(); //updating for A03
+	LoadFBX(FixPath(L"../../Assets/Models/TestCube.fbx").c_str());
 	// Set initial graphics API state pipeline settings
 	{
 		Graphics::Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -87,7 +88,7 @@ void Game::LoadFBX(const std::wstring& fbxFile)
 void Game::CreateGeometry()
 {
 	{
-		std::shared_ptr<Mesh> cube = std::make_shared<Mesh>("cube", FixPath(L"../../Assets/Models/cube.obj").c_str());
+		std::shared_ptr<Mesh> cube = std::make_shared<Mesh>("cube", FixPath(L"../../Assets/Models/cube.obj").c_str(), false);
 		meshes.push_back(cube);
 	}
 	//TODO REORDER WHERE GEOMETRY COMES BEFORE MATERIALS AND ASSIGN SUCH IN INIT. THIS IS BECAUSE THE SKYBOX needs geometry for the cube map

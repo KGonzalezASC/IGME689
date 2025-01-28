@@ -237,10 +237,10 @@ Mesh::Mesh(const char* name, const std::wstring& inputFile, bool isFBX) : name(n
 		//    sophisticated model loading library like TinyOBJLoader or The Open Asset Importer Library
 	}
 }
-Mesh::Mesh(const char* name, const std::wstring& objFile) : name(name)
-{
-	
-}
+//Mesh::Mesh(const char* name, const std::wstring& objFile) : name(name)
+//{
+//	
+//}
 
 
 void Mesh::LoadFBX(const std::wstring& filePath)

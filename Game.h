@@ -28,13 +28,14 @@ public:
 	void Draw(float deltaTime, float totalTime);
 	void OnResize();
 
-	void LoadFBX(const std::wstring& fbxFile);
+	
 private:
 
 	// Initialization helper methods - feel free to customize, combine, remove, etc.
 	void LoadShaders();
 	
 	void CreateGeometry();
+	void LoadFBX(const std::wstring& fbxFile);
 	void updateUi(float deltaTime);
 
 	std::vector<std::shared_ptr<Camera>> cameras;
