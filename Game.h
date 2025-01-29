@@ -63,13 +63,16 @@ private:
 	float bgColor[4] = { 0.45f, 0.55f, 0.60f, 1.00f }; // Background color
 	float tintColor[4] = {1.0f, 1.0f, 1.0f, 1.0f}; // Tint color
 
+	//--------------JoltPhysics----------------
 	PhysicsManager* physicsManager;
+	BodyID sphere1;
+	BodyID sphere2;
+
+	uint step = 0;
 
 	// We simulate the physics world in discrete time steps. 60 Hz is a good rate to update the physics system.
 	const float cDeltaTime = 1.0f / 60.0f;
-
 	float timeSincePhysicsStep = 0.f;
-
 	bool runPhysics = false;
 };
 

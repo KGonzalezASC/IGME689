@@ -220,6 +220,10 @@ public:
 
 	void JoltPhysicsFrame(std::shared_ptr<GameObject> entity1, std::shared_ptr<GameObject> entity2);
 	void DeInitPhysics();
+	BodyID CreatePhysicsSphereBody(RVec3 position);
+	void AddBodyVelocity(BodyID body, Vec3 velocity);
+
+	BodyInterface* body_interface;
 
 private:
 	//-------------JoltPhysics-------------------
@@ -258,15 +262,12 @@ private:
 	ObjectLayerPairFilterImpl object_vs_object_layer_filter;
 
 	PhysicsSystem physics_system;
-	BodyInterface* body_interface;
-	BodyID sphere_id;
-	BodyID sphere_id2;
+
+	vector<BodyID> bodies;
 	Body* floor;
 
 	TempAllocatorImpl* temp_allocator;
 	JobSystemThreadPool* job_system;
-
-	uint step = 0;
 
 	// We simulate the physics world in discrete time steps. 60 Hz is a good rate to update the physics system.
 	const float cDeltaTime = 1.0f / 60.0f;

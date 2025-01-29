@@ -11,9 +11,9 @@ PhysicsManager::PhysicsManager()
 	Trace = TraceImpl;
 	JPH_IF_ENABLE_ASSERTS(AssertFailed = AssertFailedImpl;)
 
-		// Create a factory, this class is responsible for creating instances of classes based on their name or hash and is mainly used for deserialization of saved data.
-		// It is not directly used in this example but still required.
-		Factory::sInstance = new Factory();
+	// Create a factory, this class is responsible for creating instances of classes based on their name or hash and is mainly used for deserialization of saved data.
+	// It is not directly used in this example but still required.
+	Factory::sInstance = new Factory();
 
 	// Register all physics types with the factory and install their collision handlers with the CollisionDispatch class.
 	// If you have your own custom shape types you probably need to register their handlers with the CollisionDispatch before calling this function.
@@ -25,24 +25,19 @@ PhysicsManager::PhysicsManager()
 	// of your own job scheduler. JobSystemThreadPool is an example implementation.
 	job_system = new JobSystemThreadPool(cMaxPhysicsJobs, cMaxPhysicsBarriers, thread::hardware_concurrency() - 1);
 
-	// We need a temp allocator for temporary allocations during the physics update. We're
-	// pre-allocating 10 MB to avoid having to do allocations during the physics update.
-	// B.t.w. 10 MB is way too much for this example but it is a typical value you can use.
-	// If you don't want to pre-allocate you can also use TempAllocatorMalloc to fall back to
-	// malloc / free.
+	// We need a temp allocator for temporary allocations during the physics update. We're pre-allocating 10 MB to avoid having to do allocations during the physics update.
+	// B.t.w. 10 MB is way too much for this example but it is a typical value you can use. If you don't want to pre-allocate you can also use TempAllocatorMalloc to fall back to malloc / free.
 	temp_allocator = new TempAllocatorImpl(10 * 1024 * 104);
 
 	// Now we can create the actual physics system.
 	physics_system.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, broad_phase_layer_interface, object_vs_broadphase_layer_filter, object_vs_object_layer_filter);
 
-	// A body activation listener gets notified when bodies activate and go to sleep
-	// Note that this is called from a job so whatever you do here needs to be thread safe.
+	// A body activation listener gets notified when bodies activate and go to sleep. Note that this is called from a job so whatever you do here needs to be thread safe.
 	// Registering one is entirely optional.
 	//MyBodyActivationListener body_activation_listener;
 	//physics_system.SetBodyActivationListener(&body_activation_listener);
 
-	// A contact listener gets notified when bodies (are about to) collide, and when they separate again.
-	// Note that this is called from a job so whatever you do here needs to be thread safe.
+	// A contact listener gets notified when bodies (are about to) collide, and when they separate again. Note that this is called from a job so whatever you do here needs to be thread safe.
 	// Registering one is entirely optional.
 	//MyContactListener contact_listener;
 	//physics_system.SetContactListener(&contact_listener);
@@ -70,18 +65,6 @@ PhysicsManager::PhysicsManager()
 	// Add it to the world
 	body_interface->AddBody(floor->GetID(), EActivation::DontActivate);
 
-	// Now create a dynamic body to bounce on the floor
-	// Note that this uses the shorthand version of creating and adding a body to the world
-	BodyCreationSettings sphere_settings(new SphereShape(0.5f), RVec3(0.0_r, 2.0_r, 0.0_r), Quat::sIdentity(), EMotionType::Dynamic, Layers::MOVING);
-	sphere_id = body_interface->CreateAndAddBody(sphere_settings, EActivation::Activate);
-
-	BodyCreationSettings sphere_settings2(new SphereShape(0.5f), RVec3(0.1_r, 0.0_r, 0.1_r), Quat::sIdentity(), EMotionType::Dynamic, Layers::MOVING);
-	sphere_id2 = body_interface->CreateAndAddBody(sphere_settings2, EActivation::Activate);
-
-	// Now you can interact with the dynamic body, in this case we're going to give it a velocity.
-	// (note that if we had used CreateBody then we could have set the velocity straight on the body before adding it to the physics system)
-	body_interface->SetLinearVelocity(sphere_id, Vec3(0.0f, -5.0f, 0.0f));
-
 	// Optional step: Before starting the physics simulation you can optimize the broad phase. This improves collision detection performance (it's pointless here because we only have 2 bodies).
 	// You should definitely not call this every frame or when e.g. streaming in a new level section as it is an expensive operation.
 	// Instead insert all new objects in batches instead of 1 at a time to keep the broad phase efficient.
@@ -90,12 +73,15 @@ PhysicsManager::PhysicsManager()
 
 void PhysicsManager::DeInitPhysics()
 {
+	for (auto& body : bodies)
+	{
+		// Remove the sphere from the physics system. Note that the sphere itself keeps all of its state and can be re-added at any time.
+		body_interface->RemoveBody(body);
+		// Destroy the sphere. After this the sphere ID is no longer valid.
+		body_interface->DestroyBody(body);
+	}
 
-	// Remove the sphere from the physics system. Note that the sphere itself keeps all of its state and can be re-added at any time.
-	body_interface->RemoveBody(sphere_id);
-
-	// Destroy the sphere. After this the sphere ID is no longer valid.
-	body_interface->DestroyBody(sphere_id);
+	bodies.clear();
 
 	// Remove and destroy the floor
 	body_interface->RemoveBody(floor->GetID());
@@ -111,28 +97,26 @@ void PhysicsManager::DeInitPhysics()
 
 void PhysicsManager::JoltPhysicsFrame(std::shared_ptr<GameObject> entity1, std::shared_ptr<GameObject> entity2)
 {
-	// Next step
-	++step;
-
-	// Output current position and velocity of the sphere
-	RVec3 position = body_interface->GetCenterOfMassPosition(sphere_id);
-	Vec3 rotation = body_interface->GetRotation(sphere_id).GetEulerAngles();
-	Vec3 velocity = body_interface->GetLinearVelocity(sphere_id);
-	cout << "Step " << step << ": Position = (" << position.GetX() << ", " << position.GetY() << ", " << position.GetZ() << "), Velocity = (" << velocity.GetX() << ", " << velocity.GetY() << ", " << velocity.GetZ() << ")" << endl;
-
-	entity1->GetTransform()->setPosition(position.GetX(), position.GetY(), position.GetZ());
-	entity1->GetTransform()->setRotation(rotation.GetX(), rotation.GetY(), rotation.GetZ());
-
-	//---------------------------
-	position = body_interface->GetCenterOfMassPosition(sphere_id2);
-	rotation = body_interface->GetRotation(sphere_id2).GetEulerAngles();
-
-	entity2->GetTransform()->setPosition(position.GetX(), position.GetY(), position.GetZ());
-	entity2->GetTransform()->setRotation(rotation.GetX(), rotation.GetY(), rotation.GetZ());
-
 	// If you take larger steps than 1 / 60th of a second you need to do multiple collision steps in order to keep the simulation stable. Do 1 collision step per 1 / 60th of a second (round up).
 	const int cCollisionSteps = 1;
 
 	// Step the world
 	physics_system.Update(cDeltaTime, cCollisionSteps, temp_allocator, job_system);
+}
+
+BodyID PhysicsManager::CreatePhysicsSphereBody(RVec3 position)
+{
+	// Now create a dynamic body to bounce on the floor
+	// Note that this uses the shorthand version of creating and adding a body to the world
+	BodyCreationSettings sphere_settings(new SphereShape(0.5f), position, Quat::sIdentity(), EMotionType::Dynamic, Layers::MOVING);
+	BodyID newSphereID = body_interface->CreateAndAddBody(sphere_settings, EActivation::Activate);
+	bodies.push_back(newSphereID);
+	return newSphereID;
+}
+
+void PhysicsManager::AddBodyVelocity(BodyID body, Vec3 velocity)
+{
+	// Now you can interact with the dynamic body, in this case we're going to give it a velocity.
+	// (note that if we had used CreateBody then we could have set the velocity straight on the body before adding it to the physics system)
+	body_interface->SetLinearVelocity(body, velocity);
 }

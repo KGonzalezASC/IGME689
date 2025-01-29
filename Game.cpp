@@ -49,6 +49,9 @@ void Game::Initialize()
 	cameras.push_back(camera2);
 
 	physicsManager = new PhysicsManager();
+	sphere1 = physicsManager->CreatePhysicsSphereBody(RVec3(0.0_r, 20.0_r, 0.0_r));
+	physicsManager->AddBodyVelocity(sphere1, Vec3(0.0f, -5.0f, 0.0f));
+	sphere2 = physicsManager->CreatePhysicsSphereBody(RVec3(0.1_r, 0.0_r, 0.1_r));
 }
 
 
@@ -228,6 +231,10 @@ void Game::Update(float deltaTime, float totalTime)
 	cameras[activeCamera]->Update(deltaTime);
 	updateUi(deltaTime);
 
+	if (Input::KeyPress(VK_DELETE))
+	{
+		physicsManager->AddBodyVelocity(sphere1, Vec3(0.0f, 5.0f, 0.0f));
+	}
 	
 	timeSincePhysicsStep += deltaTime;
 
@@ -235,6 +242,25 @@ void Game::Update(float deltaTime, float totalTime)
 	{
 		physicsManager->JoltPhysicsFrame(entities[0],entities[1]);
 		timeSincePhysicsStep -= cDeltaTime;
+
+		// Next step
+		++step;
+
+		// Output current position and velocity of the sphere
+		RVec3 position = physicsManager->body_interface->GetCenterOfMassPosition(sphere1);
+		Vec3 rotation = physicsManager->body_interface->GetRotation(sphere1).GetEulerAngles();
+		Vec3 velocity = physicsManager->body_interface->GetLinearVelocity(sphere1);
+		cout << "Step " << step << ": Position = (" << position.GetX() << ", " << position.GetY() << ", " << position.GetZ() << "), Velocity = (" << velocity.GetX() << ", " << velocity.GetY() << ", " << velocity.GetZ() << ")" << endl;
+
+		entities[0]->GetTransform()->setPosition(position.GetX(), position.GetY(), position.GetZ());
+		entities[0]->GetTransform()->setRotation(rotation.GetX(), rotation.GetY(), rotation.GetZ());
+
+		//---------------------------
+		position = physicsManager->body_interface->GetCenterOfMassPosition(sphere2);
+		rotation = physicsManager->body_interface->GetRotation(sphere2).GetEulerAngles();
+
+		entities[1]->GetTransform()->setPosition(position.GetX(), position.GetY(), position.GetZ());
+		entities[1]->GetTransform()->setRotation(rotation.GetX(), rotation.GetY(), rotation.GetZ());
 	}
 
 
