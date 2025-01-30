@@ -2,12 +2,23 @@
 #include <xaudio2.h>
 #include <memory>
 #include <vector>
+#ifdef _XBOX //Big-Endian
 #define fourccRIFF 'RIFF'
 #define fourccDATA 'data'
 #define fourccFMT 'fmt '
 #define fourccWAVE 'WAVE'
 #define fourccXWMA 'XWMA'
 #define fourccDPDS 'dpds'
+#endif
+
+#ifndef _XBOX //Little-Endian
+#define fourccRIFF 'FFIR'
+#define fourccDATA 'atad'
+#define fourccFMT ' tmf'
+#define fourccWAVE 'EVAW'
+#define fourccXWMA 'AMWX'
+#define fourccDPDS 'sdpd'
+#endif
 /*
    Much of this code was adapted from YouTube user Cakez's XAudio2 tutorial
    (https://www.youtube.com/watch?v=38A6WmBvxHM), so credit to them for this
@@ -21,7 +32,7 @@ constexpr double CYCLESPERSEC = 220.0;                                          
 constexpr double VOLUME = 0.5;                                                           // 50% volume. Potentially better practice to set this value in the game loop?
 constexpr WORD AUDIOBUFFERSIZEINCYCLES = 10;                                             // 10 cycles per audio buffer.
 constexpr double PI = 3.14159265358979323846;
-constexpr WORD NUM_CHANNELS = 1;														 // 1 audio channel to test.
+constexpr WORD NUM_CHANNELS = 2;														 // 1 audio channel to test.
 
 // Calculated constants
 constexpr DWORD SAMPLESPERCYCLE = (DWORD)(SAMPLESPERSEC / CYCLESPERSEC);                 // 200 samples per cycle.
