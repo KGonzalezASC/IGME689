@@ -108,8 +108,18 @@ BodyID PhysicsManager::CreatePhysicsSphereBody(RVec3 position)
 {
 	// Now create a dynamic body to bounce on the floor
 	// Note that this uses the shorthand version of creating and adding a body to the world
-	BodyCreationSettings sphere_settings(new SphereShape(0.5f), position, Quat::sIdentity(), EMotionType::Dynamic, Layers::MOVING);
+	BodyCreationSettings sphere_settings(new SphereShape(1.0f), position, Quat::sIdentity(), EMotionType::Dynamic, Layers::MOVING);
 	BodyID newSphereID = body_interface->CreateAndAddBody(sphere_settings, EActivation::Activate);
+	bodies.push_back(newSphereID);
+	return newSphereID;
+}
+
+BodyID PhysicsManager::CreatePhysicsCubeBody(RVec3 position)
+{
+	// Now create a dynamic body to bounce on the floor
+	// Note that this uses the shorthand version of creating and adding a body to the world
+	BodyCreationSettings cube_settings(new BoxShape(Vec3(1.0f,1.0f,1.0f), 1.0f), position, Quat::sIdentity(), EMotionType::Dynamic, Layers::MOVING);
+	BodyID newSphereID = body_interface->CreateAndAddBody(cube_settings, EActivation::Activate);
 	bodies.push_back(newSphereID);
 	return newSphereID;
 }

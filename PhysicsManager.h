@@ -221,6 +221,7 @@ public:
 	void JoltPhysicsFrame(std::shared_ptr<GameObject> entity1, std::shared_ptr<GameObject> entity2);
 	void DeInitPhysics();
 	BodyID CreatePhysicsSphereBody(RVec3 position);
+	BodyID CreatePhysicsCubeBody(RVec3 position);
 	void AddBodyVelocity(BodyID body, Vec3 velocity);
 
 	BodyInterface* body_interface;

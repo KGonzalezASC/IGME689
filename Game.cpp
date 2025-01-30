@@ -33,6 +33,21 @@ void Game::Initialize()
 	std::shared_ptr<Material> redMaterial = std::make_shared<Material>("Red Solid", pixelShader, vertexShader, XMFLOAT3(1.0f, 0.0f, 0.0f));
 	materials.insert(materials.end(), { redMaterial});
 
+	std::shared_ptr<Material> orangeMaterial = std::make_shared<Material>("Orange Solid", pixelShader, vertexShader, XMFLOAT3(1.0f, 165.f/255.f, 0.0f));
+	materials.insert(materials.end(), { orangeMaterial });
+	
+	std::shared_ptr<Material> yellowMaterial = std::make_shared<Material>("Yellow Solid", pixelShader, vertexShader, XMFLOAT3(1.0f, 1.0f, 0.0f));
+	materials.insert(materials.end(), { yellowMaterial });
+	
+	std::shared_ptr<Material> greenMaterial = std::make_shared<Material>("Green Solid", pixelShader, vertexShader, XMFLOAT3(0.0f, 1.0f, 0.0f));
+	materials.insert(materials.end(), { greenMaterial });
+	
+	std::shared_ptr<Material> blueMaterial = std::make_shared<Material>("Blue Solid", pixelShader, vertexShader, XMFLOAT3(0.0f, 0.0f, 1.0f));
+	materials.insert(materials.end(), { blueMaterial });
+	
+	std::shared_ptr<Material> purpleMaterial = std::make_shared<Material>("Purple Solid", pixelShader, vertexShader, XMFLOAT3(0.5f, 0.0f, 0.5f));
+	materials.insert(materials.end(), { purpleMaterial });
+
 
 	CreateGeometry(); //updating for A03
 	// Set initial graphics API state pipeline settings
@@ -231,9 +246,17 @@ void Game::Update(float deltaTime, float totalTime)
 	cameras[activeCamera]->Update(deltaTime);
 	updateUi(deltaTime);
 
+	//if (Input::KeyPress(VK_DELETE))
+	//{
+	//	physicsManager->AddBodyVelocity(sphere1, Vec3(0.0f, 5.0f, 0.0f));
+	//}
+
 	if (Input::KeyPress(VK_DELETE))
 	{
-		physicsManager->AddBodyVelocity(sphere1, Vec3(0.0f, 5.0f, 0.0f));
+		int matLocation = rand() % materials.size();
+
+		newBodies.push_back(physicsManager->CreatePhysicsCubeBody(Vec3(0.0f, 10.0f, 0.0f)));
+		entities.push_back(std::make_shared<GameObject>(meshes[0], materials[matLocation]));
 	}
 	
 	timeSincePhysicsStep += deltaTime;
@@ -245,12 +268,10 @@ void Game::Update(float deltaTime, float totalTime)
 
 		// Next step
 		++step;
-
+		
 		// Output current position and velocity of the sphere
 		RVec3 position = physicsManager->body_interface->GetCenterOfMassPosition(sphere1);
 		Vec3 rotation = physicsManager->body_interface->GetRotation(sphere1).GetEulerAngles();
-		Vec3 velocity = physicsManager->body_interface->GetLinearVelocity(sphere1);
-		cout << "Step " << step << ": Position = (" << position.GetX() << ", " << position.GetY() << ", " << position.GetZ() << "), Velocity = (" << velocity.GetX() << ", " << velocity.GetY() << ", " << velocity.GetZ() << ")" << endl;
 
 		entities[0]->GetTransform()->setPosition(position.GetX(), position.GetY(), position.GetZ());
 		entities[0]->GetTransform()->setRotation(rotation.GetX(), rotation.GetY(), rotation.GetZ());
@@ -261,6 +282,15 @@ void Game::Update(float deltaTime, float totalTime)
 
 		entities[1]->GetTransform()->setPosition(position.GetX(), position.GetY(), position.GetZ());
 		entities[1]->GetTransform()->setRotation(rotation.GetX(), rotation.GetY(), rotation.GetZ());
+
+		for (size_t i = 0; i < newBodies.size(); i++)
+		{
+			position = physicsManager->body_interface->GetCenterOfMassPosition(newBodies[i]);
+			rotation = physicsManager->body_interface->GetRotation(newBodies[i]).GetEulerAngles();
+
+			entities[i+2]->GetTransform()->setPosition(position.GetX(), position.GetY(), position.GetZ());
+			entities[i+2]->GetTransform()->setRotation(rotation.GetX(), rotation.GetY(), rotation.GetZ());
+		}
 	}
 
 
