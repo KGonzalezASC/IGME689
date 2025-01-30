@@ -2,6 +2,7 @@
 #include <xaudio2.h>
 #include <memory>
 #include <vector>
+#include <iostream>
 #ifdef _XBOX //Big-Endian
 #define fourccRIFF 'RIFF'
 #define fourccDATA 'data'
@@ -63,44 +64,44 @@ constexpr WORD MAX_SOUND_PATH_LENGTH = 256;												 // Maximum sound path si
 //};
 
 // XAudioVoice struct
-struct XAudioVoice : IXAudio2VoiceCallback
-{
-	IXAudio2SourceVoice* voice;
-	bool playing;
-
-	void OnStreamEnd() noexcept
-	{
-		voice->Stop();
-		playing = false;
-	}
-
-	void OnBufferStart(void* pBufferContext) noexcept
-	{
-		playing = true;
-	}
-
-	// Methods that need to be defined but not scripted, could do cool stuff with them later
-	void OnVoiceProcessingPassEnd() noexcept {}
-	void OnVoiceProcessingPassStart(UINT32 SamplesRequired) noexcept {}
-	void OnBufferEnd(void* pBufferContext) noexcept {}
-	void OnLoopEnd(void* pBufferContext) noexcept {}
-	void OnVoiceError(void* pBufferContext, HRESULT error) noexcept {}
-};
-
-//class AudioManager
+//struct XAudioVoice : IXAudio2VoiceCallback
 //{
-//public:
-//	~AudioManager();
-//	void playSound(Sound sound);
-//	void update_audio(float dt);
-//	static AudioManager& Get();
+//	bool playing;
 //
-//private:
-//	static XAudioVoice voiceArr[MAX_CONCURRENT_SOUNDS];
-//	IXAudio2* xAudio2;
-//	AudioManager();
-//	bool init();
-//	HRESULT FindChunk(HANDLE hFile, DWORD fourcc, DWORD& dwChunkSize, DWORD& dwChunkDataPosition);
-//	HRESULT ReadChunkData(HANDLE hFile, void* buffer, DWORD buffersize, DWORD bufferoffset);
+//	void OnStreamEnd() noexcept
+//	{
+//		voice->Stop();
+//		playing = false;
+//	}
+//
+//	void OnBufferStart(void* pBufferContext) noexcept
+//	{
+//		playing = true;
+//	}
+//
+//	// Methods that need to be defined but not scripted, could do cool stuff with them later
+//	void OnVoiceProcessingPassEnd() noexcept {}
+//	void OnVoiceProcessingPassStart(UINT32 SamplesRequired) noexcept {}
+//	void OnBufferEnd(void* pBufferContext) noexcept {}
+//	void OnLoopEnd(void* pBufferContext) noexcept {}
+//	void OnVoiceError(void* pBufferContext, HRESULT error) noexcept {}
 //};
+
+class AudioManager
+{
+public:
+	AudioManager();
+	~AudioManager();
+	void playSound(const char filePath[MAX_SOUND_PATH_LENGTH]);
+	//void update_audio(float dt);
+
+private:
+	//static XAudioVoice voiceArr[MAX_CONCURRENT_SOUNDS]; Uncomment when multiple voices are used
+	//XAudioVoice* voice;
+	IXAudio2SourceVoice* voice;
+	IXAudio2* xAudio2;
+	bool init();
+	HRESULT FindChunk(HANDLE hFile, DWORD fourcc, DWORD& dwChunkSize, DWORD& dwChunkDataPosition);
+	HRESULT ReadChunkData(HANDLE hFile, void* buffer, DWORD buffersize, DWORD bufferoffset);
+};
 

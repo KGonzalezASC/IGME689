@@ -28,11 +28,6 @@ void Game::Initialize()
 	ImGui_ImplDX11_Init(Graphics::Device.Get(), Graphics::Context.Get());
 	LoadShaders();
 
-	// Call TestAudio() function
-	TestAudio();
-
-
-
 	//TODO: REPLACE WITH PBR MATERIALS (i.e remove the tint and or make accomodations for both in PS)
 	std::shared_ptr<Material> redMaterial = std::make_shared<Material>("Red Solid", pixelShader, vertexShader, XMFLOAT3(1.0f, 0.0f, 0.0f));
 	materials.insert(materials.end(), { redMaterial});
@@ -51,6 +46,9 @@ void Game::Initialize()
 	std::shared_ptr<Camera> camera2 = std::make_shared<Camera>(Window::AspectRatio(), XMFLOAT3(0.5f, 0.0f, -15.0f), XM_PIDIV4, 0.01f, 1000.0f, 5.0f, 0.0055f);
 	camera2.get()->getTransform().moveRelative(0.5f, 0.0f, 0.0f);
 	cameras.push_back(camera2);
+
+	audioManager = std::make_shared<AudioManager>();
+	audioManager->playSound("Sounds/vine-boom.wav");
 }
 
 
@@ -270,162 +268,4 @@ void Game::Draw(float deltaTime, float totalTime)
 			Graphics::BackBufferRTV.GetAddressOf(),
 			Graphics::DepthBufferDSV.Get());
 	}
-}
-
-// Throwing the entire audio code in here to test before
-// making the system proper
-void Game::TestAudio()
-{
-	// Initialize COM
-	HRESULT hr = ::CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-	if (FAILED(hr))
-	{	
-		std::cout << "Failed at initialize com" << std::endl;
-		return;
-	}
-	// Create an instance of the XAudio2 engine
-	IXAudio2* xAudio2 = nullptr;
-	hr = XAudio2Create(&xAudio2, 0, XAUDIO2_DEFAULT_PROCESSOR); 
-	if (FAILED(hr))
-	{
-		std::cout << "Failed at XAudio2 engine creation" << std::endl;
-		return;
-	}
-
-	// Create a mastering voice
-	IXAudio2MasteringVoice* masteringVoice = nullptr;
-	hr = xAudio2->CreateMasteringVoice(&masteringVoice);
-	if (FAILED(hr))
-	{
-		std::cout << "Failed at mastering voice creation" << std::endl;
-		return;
-	}
-
-	// Define a format
-	WAVEFORMATEX wave = {};
-	wave.wFormatTag = WAVE_FORMAT_PCM;
-	wave.nChannels = NUM_CHANNELS;
-	wave.nSamplesPerSec = SAMPLESPERSEC;
-	wave.wBitsPerSample = BITSPERSSAMPLE;
-	wave.nBlockAlign = NUM_CHANNELS * BITSPERSSAMPLE / 8;
-	wave.nAvgBytesPerSec = SAMPLESPERSEC * wave.nBlockAlign;
-
-	// Make a voice
-	xAudio2->CreateSourceVoice(&m_pXAudio2SourceVoice, &wave, 0, XAUDIO2_DEFAULT_FREQ_RATIO);
-	m_pXAudio2SourceVoice->SetVolume(VOLUME);
-
-	// Declare WAVEFORMATEX and XAUDIO2_BUFFER structs
-	WAVEFORMATEXTENSIBLE wfx = { 0 };
-	XAUDIO2_BUFFER buffer = { 0 };
-
-	// Open and load the file
-	const TCHAR* strFileName = TEXT("Sounds\\vine-boom.wav");
-	HANDLE hFile = CreateFile(
-		strFileName,
-		GENERIC_READ,
-		FILE_SHARE_READ,
-		NULL,
-		OPEN_EXISTING,
-		0,
-		NULL);
-
-	DWORD dwChunkSize;
-	DWORD dwChunkPosition;
-
-	//check the file type, should be fourccWAVE or 'XWMA'
-
-	std::cout << std::system_category().message(FindChunk(hFile, fourccRIFF, dwChunkSize, dwChunkPosition)) << std::endl;
-	DWORD filetype;
-	ReadChunkData(hFile, &filetype, sizeof(DWORD), dwChunkPosition);
-	if (filetype != fourccWAVE)
-	{
-		std::cout << "File is not fourccWAVE" << std::endl;
-		return;
-	}
-
-	// Locate the FMT chunk, and copy its contents into a WAVEFORMATEX structure 
-	FindChunk(hFile, fourccFMT, dwChunkSize, dwChunkPosition);
-	ReadChunkData(hFile, &wfx, dwChunkSize, dwChunkPosition);
-
-	// Locate the data chunk, and read its contents into a buffer
-	FindChunk(hFile, fourccDATA, dwChunkSize, dwChunkPosition);
-	BYTE* pDataBuffer = new BYTE[dwChunkSize];
-	ReadChunkData(hFile, pDataBuffer, dwChunkSize, dwChunkPosition);
-
-	// Populate the XAUDIO2_BUFFER structure
-	buffer.AudioBytes = dwChunkSize;  //size of the audio buffer in bytes
-	buffer.pAudioData = pDataBuffer;  //buffer containing audio data
-	buffer.Flags = XAUDIO2_END_OF_STREAM; // tell the source voice not to expect any data after this buffer
-
-	// Submit the buffer to the source voice
-	m_pXAudio2SourceVoice->SubmitSourceBuffer(&buffer);
-
-	// Play the sound
-	m_pXAudio2SourceVoice->Start(0);
-}
-
-HRESULT Game::FindChunk(HANDLE hFile, DWORD fourcc, DWORD& dwChunkSize, DWORD& dwChunkDataPosition)
-{
-	HRESULT hr = S_OK;
-	if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, 0, NULL, FILE_BEGIN))
-		return HRESULT_FROM_WIN32(GetLastError());
-
-	DWORD dwChunkType;
-	DWORD dwChunkDataSize;
-	DWORD dwRIFFDataSize = 0;
-	DWORD dwFileType;
-	DWORD bytesRead = 0;
-	DWORD dwOffset = 0;
-
-	while (hr == S_OK)
-	{
-		DWORD dwRead;
-		if (0 == ReadFile(hFile, &dwChunkType, sizeof(DWORD), &dwRead, NULL))
-			hr = HRESULT_FROM_WIN32(GetLastError());
-
-		if (0 == ReadFile(hFile, &dwChunkDataSize, sizeof(DWORD), &dwRead, NULL))
-			hr = HRESULT_FROM_WIN32(GetLastError());
-
-
-		switch (dwChunkType)
-		{
-		case fourccRIFF:
-			dwRIFFDataSize = dwChunkDataSize;
-			dwChunkDataSize = 4;
-			if (0 == ReadFile(hFile, &dwFileType, sizeof(DWORD), &dwRead, NULL))
-				hr = HRESULT_FROM_WIN32(GetLastError());
-			break;
-
-		default:
-			//Current error: dwChunkType isn't a fourccRIFF
-			if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, dwChunkDataSize, NULL, FILE_CURRENT))
-				return HRESULT_FROM_WIN32(GetLastError());
-		}
-
-		dwOffset += sizeof(DWORD) * 2;
-
-		if (dwChunkType == fourcc)
-		{
-			dwChunkSize = dwChunkDataSize;
-			dwChunkDataPosition = dwOffset;
-			return S_OK;
-		}
-
-		dwOffset += dwChunkDataSize;
-
-		if (bytesRead >= dwRIFFDataSize) return S_FALSE;
-	}
-
-	return S_OK;
-}
-
-HRESULT Game::ReadChunkData(HANDLE hFile, void* buffer, DWORD buffersize, DWORD bufferoffset)
-{
-	HRESULT hr = S_OK;
-	if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, bufferoffset, NULL, FILE_BEGIN))
-		return HRESULT_FROM_WIN32(GetLastError());
-	DWORD dwRead;
-	if (0 == ReadFile(hFile, buffer, buffersize, &dwRead, NULL))
-		hr = HRESULT_FROM_WIN32(GetLastError());
-	return hr;
 }

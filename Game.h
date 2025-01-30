@@ -58,19 +58,12 @@ private:
 	std::shared_ptr<SimplePixelShader> normalPixelShader;
 	std::shared_ptr<SimplePixelShader> customPixelShader;
 
-	
-
-
 	//ImGui
 	bool showDemoWindow = false;
 	float bgColor[4] = { 0.45f, 0.55f, 0.60f, 1.00f }; // Background color
 	float tintColor[4] = {1.0f, 1.0f, 1.0f, 1.0f}; // Tint color
 
-
-	// Audio stuff that I'm putting in here for now, will move to its own file when everything is working
-	IXAudio2SourceVoice* m_pXAudio2SourceVoice{};
-	void TestAudio();
-	HRESULT FindChunk(HANDLE hFile, DWORD fourcc, DWORD& dwChunkSize, DWORD& dwChunkDataPosition);
-	HRESULT ReadChunkData(HANDLE hFile, void* buffer, DWORD buffersize, DWORD bufferoffset);
+	// Audio
+	std::shared_ptr<AudioManager> audioManager;
 };
 

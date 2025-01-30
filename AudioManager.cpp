@@ -1,100 +1,164 @@
 #include "AudioManager.h"
 
-// Commented out because I was getting ahead of myself
-//AudioManager& AudioManager::Get()
-//{
-//	static AudioManager instance;
-//	return instance;
-//}
-//
-//AudioManager::AudioManager()
-//{
-//	bool initSuccess = init();
-//	if (!initSuccess)
-//	{
-//		// TODO: Throw error if initialization failed
-//	}
-//}
-//
-//AudioManager::~AudioManager()
-//{
-//	if (xAudio2)
-//	{
-//		xAudio2->Release();
-//		xAudio2 = nullptr;
-//	}
-//
-//	CoUninitialize();
-//}
-//
-//void AudioManager::playSound(Sound sound)
-//{
-//	// Check if there are any inactive voices
-//	for (int idx = 2; idx < MAX_CONCURRENT_SOUNDS; idx++) // First two voices are reserved for music
-//	{
-//		XAudioVoice* voice = &voiceArr[idx];
-//		// If an inactive voice is found, play the sound on it
-//		if (!voice->playing)
-//		{
-//			// TODO: Store the most recently-played sounds to a cache
-//			HANDLE hFile = CreateFile(
-//				sound.GetFileName(),
-//				GENERIC_READ,
-//				FILE_SHARE_READ,
-//				NULL,
-//				OPEN_EXISTING,
-//				0,
-//				NULL);
-//
-//			DWORD dwChunkSize;
-//			DWORD dwChunkPosition;
-//			//check the file type, should be fourccWAVE or 'XWMA'
-//			FindChunk(hFile, fourccRIFF, dwChunkSize, dwChunkPosition);
-//			DWORD filetype;
-//			ReadChunkData(hFile, &filetype, sizeof(DWORD), dwChunkPosition);
-//			if (filetype != fourccWAVE)
-//				return S_FALSE;
-//		}
-//	}
-//}
-//
-//bool AudioManager::init()
-//{
-//	// Initialize COM
-//	HRESULT hr = ::CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-//	if (FAILED(hr)) return false;
-//
-//	// Create an instance of the XAudio2 engine
-//	hr = XAudio2Create(&xAudio2, 0, XAUDIO2_DEFAULT_PROCESSOR);
-//	if (FAILED(hr)) return false;
-//
-//	// Create a mastering voice
-//	IXAudio2MasteringVoice* masteringVoice = nullptr;
-//	hr = xAudio2->CreateMasteringVoice(&masteringVoice);
-//	if (FAILED(hr)) return false;
-//
-//	// Define a format
-//	WAVEFORMATEX wave = {};
-//	wave.wFormatTag = WAVE_FORMAT_PCM;
-//	wave.nChannels = NUM_CHANNELS;
-//	wave.nSamplesPerSec = SAMPLESPERSEC;
-//	wave.wBitsPerSample = BITSPERSSAMPLE;
-//	wave.nBlockAlign = NUM_CHANNELS * BITSPERSSAMPLE / 8;
-//	wave.nAvgBytesPerSec = SAMPLESPERSEC * wave.nBlockAlign;
-//
-//	// Initialize the array of voices
-//	for (int idx = 0; idx < MAX_CONCURRENT_SOUNDS; idx++)
-//	{
-//		XAudioVoice* voice = &voiceArr[idx];
-//		hr = xAudio2->CreateSourceVoice(&voice->voice, &wave, 0, XAUDIO2_DEFAULT_FREQ_RATIO, voice);
-//		voice->voice->SetVolume(VOLUME);
-//		if (FAILED(hr)) return false;
-//	}
-//
-//	// Everything has been set up successfully, return true
-//	return true;
-//}
-//
+AudioManager::AudioManager()
+{
+	bool initSuccess = init();
+	if (!initSuccess)
+	{
+		// TODO: Throw error if initialization failed
+	}
+}
+
+AudioManager::~AudioManager()
+{
+	if (xAudio2)
+	{
+		xAudio2->Release();
+		xAudio2 = nullptr;
+	}
+
+	CoUninitialize();
+}
+
+void AudioManager::playSound(const char filePath[MAX_SOUND_PATH_LENGTH])
+{
+	// Convert cstring to WCHAR
+	size_t newsize = strlen(filePath) + 1;
+	wchar_t* filePathWCHAR = new wchar_t[newsize];
+	size_t convertedChars = 0;
+	mbstowcs_s(&convertedChars, filePathWCHAR, newsize, filePath, _TRUNCATE);
+
+	// Declare WAVEFORMATEX and XAUDIO2_BUFFER structs
+	WAVEFORMATEXTENSIBLE wfx = { 0 };
+	XAUDIO2_BUFFER buffer = { 0 };
+
+	HANDLE hFile = CreateFile(
+		filePathWCHAR,
+		GENERIC_READ,
+		FILE_SHARE_READ,
+		NULL,
+		OPEN_EXISTING,
+		0,
+		NULL);
+
+	DWORD dwChunkSize;
+	DWORD dwChunkPosition;
+
+	//check the file type, should be fourccWAVE or 'XWMA'
+	FindChunk(hFile, fourccRIFF, dwChunkSize, dwChunkPosition);
+	DWORD filetype;
+	ReadChunkData(hFile, &filetype, sizeof(DWORD), dwChunkPosition);
+	if (filetype != fourccWAVE)
+	{
+		std::cout << "File is not fourccWAVE" << std::endl;
+		return;
+	}
+
+	// Locate the FMT chunk, and copy its contents into a WAVEFORMATEX structure 
+	FindChunk(hFile, fourccFMT, dwChunkSize, dwChunkPosition);
+	ReadChunkData(hFile, &wfx, dwChunkSize, dwChunkPosition);
+
+	// Locate the data chunk, and read its contents into a buffer
+	FindChunk(hFile, fourccDATA, dwChunkSize, dwChunkPosition);
+	BYTE* pDataBuffer = new BYTE[dwChunkSize];
+	ReadChunkData(hFile, pDataBuffer, dwChunkSize, dwChunkPosition);
+
+	// Populate the XAUDIO2_BUFFER structure
+	buffer.AudioBytes = dwChunkSize;  //size of the audio buffer in bytes
+	buffer.pAudioData = pDataBuffer;  //buffer containing audio data
+	buffer.Flags = XAUDIO2_END_OF_STREAM; // tell the source voice not to expect any data after this buffer
+
+	// Submit the buffer to the source voice
+	voice->SubmitSourceBuffer(&buffer);
+
+	// Play the sound
+	voice->Start(0);
+
+	// Delete the reference to the WCHAR string
+	delete[] filePathWCHAR;
+
+	// Check if there are any inactive voices
+	//for (int idx = 2; idx < MAX_CONCURRENT_SOUNDS; idx++) // First two voices are reserved for music
+	//{
+	//	XAudioVoice* voice = &voiceArr[idx];
+	//	// If an inactive voice is found, play the sound on it
+	//	if (!voice->playing)
+	//	{
+	//		// TODO: Store the most recently-played sounds to a cache
+	//		HANDLE hFile = CreateFile(
+	//			sound.GetFileName(),
+	//			GENERIC_READ,
+	//			FILE_SHARE_READ,
+	//			NULL,
+	//			OPEN_EXISTING,
+	//			0,
+	//			NULL);
+	//
+	//		DWORD dwChunkSize;
+	//		DWORD dwChunkPosition;
+	//		//check the file type, should be fourccWAVE or 'XWMA'
+	//		FindChunk(hFile, fourccRIFF, dwChunkSize, dwChunkPosition);
+	//		DWORD filetype;
+	//		ReadChunkData(hFile, &filetype, sizeof(DWORD), dwChunkPosition);
+	//		if (filetype != fourccWAVE)
+	//			return S_FALSE;
+	//	}
+	//}
+}
+
+bool AudioManager::init()
+{
+	// Initialize COM
+	HRESULT hr = ::CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+	if (FAILED(hr))
+	{
+		std::cout << "Failed at initialize com" << std::endl;
+		return false;
+	}
+
+	// Create an instance of the XAudio2 engine
+	hr = XAudio2Create(&xAudio2, 0, XAUDIO2_DEFAULT_PROCESSOR);
+	if (FAILED(hr))
+	{
+		std::cout << "Failed at XAudio2 engine creation" << std::endl;
+		return false;
+	}
+
+	// Create a mastering voice
+	IXAudio2MasteringVoice* masteringVoice = nullptr;
+	hr = xAudio2->CreateMasteringVoice(&masteringVoice);
+	if (FAILED(hr))
+	{
+		std::cout << "Failed at mastering voice creation" << std::endl;
+		return false;
+	}
+
+	// Define a format
+	WAVEFORMATEX wave = {};
+	wave.wFormatTag = WAVE_FORMAT_PCM;
+	wave.nChannels = NUM_CHANNELS;
+	wave.nSamplesPerSec = SAMPLESPERSEC;
+	wave.wBitsPerSample = BITSPERSSAMPLE;
+	wave.nBlockAlign = NUM_CHANNELS * BITSPERSSAMPLE / 8;
+	wave.nAvgBytesPerSec = SAMPLESPERSEC * wave.nBlockAlign;
+
+	// Make a source voice
+	xAudio2->CreateSourceVoice(&voice, &wave, 0, XAUDIO2_DEFAULT_FREQ_RATIO);
+	voice->SetVolume(VOLUME);
+
+	// Initialize the array of voices
+	//for (int idx = 0; idx < MAX_CONCURRENT_SOUNDS; idx++)
+	//{
+	//	XAudioVoice* voice = &voiceArr[idx];
+	//	hr = xAudio2->CreateSourceVoice(&voice->voice, &wave, 0, XAUDIO2_DEFAULT_FREQ_RATIO, voice);
+	//	voice->voice->SetVolume(VOLUME);
+	//	if (FAILED(hr)) return false;
+	//}
+
+	// Everything has been set up successfully, return true
+	return true;
+}
+
 //void AudioManager::update_audio(float dt)
 //{
 //	// Check every actively playing sound
@@ -104,14 +168,69 @@
 //	//	// Check if the sound actually has data
 //	//}
 //}
-//
-//HRESULT AudioManager::ReadChunkData(HANDLE hFile, void* buffer, DWORD buffersize, DWORD bufferoffset)
-//{
-//	HRESULT hr = S_OK;
-//	if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, bufferoffset, NULL, FILE_BEGIN))
-//		return HRESULT_FROM_WIN32(GetLastError());
-//	DWORD dwRead;
-//	if (0 == ReadFile(hFile, buffer, buffersize, &dwRead, NULL))
-//		hr = HRESULT_FROM_WIN32(GetLastError());
-//	return hr;
-//}
+
+HRESULT AudioManager::FindChunk(HANDLE hFile, DWORD fourcc, DWORD& dwChunkSize, DWORD& dwChunkDataPosition)
+{
+	HRESULT hr = S_OK;
+	if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, 0, NULL, FILE_BEGIN))
+		return HRESULT_FROM_WIN32(GetLastError());
+
+	DWORD dwChunkType;
+	DWORD dwChunkDataSize;
+	DWORD dwRIFFDataSize = 0;
+	DWORD dwFileType;
+	DWORD bytesRead = 0;
+	DWORD dwOffset = 0;
+
+	while (hr == S_OK)
+	{
+		DWORD dwRead;
+		if (0 == ReadFile(hFile, &dwChunkType, sizeof(DWORD), &dwRead, NULL))
+			hr = HRESULT_FROM_WIN32(GetLastError());
+
+		if (0 == ReadFile(hFile, &dwChunkDataSize, sizeof(DWORD), &dwRead, NULL))
+			hr = HRESULT_FROM_WIN32(GetLastError());
+
+
+		switch (dwChunkType)
+		{
+		case fourccRIFF:
+			dwRIFFDataSize = dwChunkDataSize;
+			dwChunkDataSize = 4;
+			if (0 == ReadFile(hFile, &dwFileType, sizeof(DWORD), &dwRead, NULL))
+				hr = HRESULT_FROM_WIN32(GetLastError());
+			break;
+
+		default:
+			//Current error: dwChunkType isn't a fourccRIFF
+			if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, dwChunkDataSize, NULL, FILE_CURRENT))
+				return HRESULT_FROM_WIN32(GetLastError());
+		}
+
+		dwOffset += sizeof(DWORD) * 2;
+
+		if (dwChunkType == fourcc)
+		{
+			dwChunkSize = dwChunkDataSize;
+			dwChunkDataPosition = dwOffset;
+			return S_OK;
+		}
+
+		dwOffset += dwChunkDataSize;
+
+		if (bytesRead >= dwRIFFDataSize) return S_FALSE;
+	}
+
+	return S_OK;
+}
+
+HRESULT AudioManager::ReadChunkData(HANDLE hFile, void* buffer, DWORD buffersize, DWORD bufferoffset)
+{
+	HRESULT hr = S_OK;
+	if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, bufferoffset, NULL, FILE_BEGIN))
+		return HRESULT_FROM_WIN32(GetLastError());
+	DWORD dwRead;
+	if (0 == ReadFile(hFile, buffer, buffersize, &dwRead, NULL))
+		hr = HRESULT_FROM_WIN32(GetLastError());
+	return hr;
+}
