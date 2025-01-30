@@ -1,4 +1,4 @@
-#pragma once
+#pragma once __InputActionManager_h__
 #include <unordered_map>
 #include <unordered_set>
 #include <functional>
@@ -44,6 +44,7 @@ namespace InputActionManager
 	void RemoveBindingFromAction(std::wstring actionName, InputBindings key);
 	// Checks if a key assosiated to a binding is has been iteracted with
 	void CheckActionBindings();
+	InputType ProcessKey(uint16_t key);
 
 	// ===== | Variables | =====
 
