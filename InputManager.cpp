@@ -3,6 +3,10 @@
 #include "InputManager.h"
 #include <hidusage.h>
 
+#include <iostream>
+
+using InputActionManager::InputBindings;
+
 // ---------------------------------------------------
 //  Initializes the input variables and sets up the
 //  initial arrays of key states
@@ -35,6 +39,12 @@ void InputManager::Initialize(HWND windowHandle)
 
 	// ND: Initialize the Action Manager
 	InputActionManager::Initialize();
+
+	InputActionManager::CreateAction(L"Test");
+
+	InputActionManager::AssignBindingToAction(L"Test", InputBindings::KeyW);
+
+	InputActionManager::GetAction(L"Test").OnTrigger.push_back([]() { std::cout << "WIN" << std::endl; });
 }
 
 // ---------------------------------------------------
@@ -75,6 +85,8 @@ void InputManager::Update()
 	mouseY = mousePos.y;
 	mouseXDelta = mouseX - prevMouseX;
 	mouseYDelta = mouseY - prevMouseY;
+
+	InputActionManager::CheckActionBindings();
 }
 
 // ----------------------------------------------------------
