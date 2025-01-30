@@ -2,6 +2,12 @@
 #include <xaudio2.h>
 #include <memory>
 #include <vector>
+#define fourccRIFF 'RIFF'
+#define fourccDATA 'data'
+#define fourccFMT 'fmt '
+#define fourccWAVE 'WAVE'
+#define fourccXWMA 'XWMA'
+#define fourccDPDS 'dpds'
 /*
    Much of this code was adapted from YouTube user Cakez's XAudio2 tutorial
    (https://www.youtube.com/watch?v=38A6WmBvxHM), so credit to them for this
@@ -28,12 +34,22 @@ static constexpr int SOUNDS_BUFFER_SIZE = 1024000000;                           
 constexpr WORD MAX_SOUND_PATH_LENGTH = 256;												 // Maximum sound path size of 256 characters.
 
 // Sound struct
-struct Sound
-{
-	char file[MAX_SOUND_PATH_LENGTH];
-	int size;
-	char* data;
-};
+//struct Sound
+//{
+//private:
+//	WCHAR fileName[MAX_SOUND_PATH_LENGTH];
+//	UINT32 size;
+//
+//public:
+//	WCHAR* GetFileName()
+//	{
+//		return fileName;
+//	}
+//	//Sound(char fileName[MAX_SOUND_PATH_LENGTH])
+//	//{
+//	//
+//	//}
+//};
 
 // XAudioVoice struct
 struct XAudioVoice : IXAudio2VoiceCallback
@@ -55,47 +71,25 @@ struct XAudioVoice : IXAudio2VoiceCallback
 	// Methods that need to be defined but not scripted, could do cool stuff with them later
 	void OnVoiceProcessingPassEnd() noexcept {}
 	void OnVoiceProcessingPassStart(UINT32 SamplesRequired) noexcept {}
-	void OnBufferEnd(void *pBufferContext) noexcept {}
+	void OnBufferEnd(void* pBufferContext) noexcept {}
 	void OnLoopEnd(void* pBufferContext) noexcept {}
 	void OnVoiceError(void* pBufferContext, HRESULT error) noexcept {}
 };
 
-// SoundState struct
-struct SoundState
-{
-	// Buffer containing all sounds
-	int bytesUsed;
-	char* allocatedSoundsBuffer;
-	// TODO: Tutorial uses a bump allocater, need to create one or find an equivalent system
-
-	// The sounds currently allocated in memory.
-	std::vector<Sound> allocatedSounds = {};
-
-	// The sounds that are currently playing.
-	std::vector<Sound> playingSounds = {};
-
-	// TODO: Replace vectors with arrays to limit the amount of played sounds to 16
-	// and remove the need for a constructor.
-	SoundState()
-	{
-		bytesUsed = 0;
-		allocatedSoundsBuffer = {};
-		allocatedSounds.reserve(16);
-		playingSounds.reserve(16);
-	}
-};
-
-class AudioManager
-{
-public:
-	AudioManager();
-	~AudioManager();
-	void playSound(char* soundName);
-	void update_audio(float dt);
-
-private:
-	static XAudioVoice voiceArr[MAX_CONCURRENT_SOUNDS];
-	static SoundState soundState;
-	bool init();
-};
+//class AudioManager
+//{
+//public:
+//	~AudioManager();
+//	void playSound(Sound sound);
+//	void update_audio(float dt);
+//	static AudioManager& Get();
+//
+//private:
+//	static XAudioVoice voiceArr[MAX_CONCURRENT_SOUNDS];
+//	IXAudio2* xAudio2;
+//	AudioManager();
+//	bool init();
+//	HRESULT FindChunk(HANDLE hFile, DWORD fourcc, DWORD& dwChunkSize, DWORD& dwChunkDataPosition);
+//	HRESULT ReadChunkData(HANDLE hFile, void* buffer, DWORD buffersize, DWORD bufferoffset);
+//};
 
