@@ -1,5 +1,7 @@
 #include "AudioManager.h"
 
+XAudioVoice AudioManager::voiceArr[MAX_CONCURRENT_SOUNDS];
+
 AudioManager::AudioManager()
 {
 	bool initSuccess = init();
@@ -69,10 +71,10 @@ void AudioManager::playSound(const char filePath[MAX_SOUND_PATH_LENGTH])
 	buffer.Flags = XAUDIO2_END_OF_STREAM; // tell the source voice not to expect any data after this buffer
 
 	// Submit the buffer to the source voice
-	voice->SubmitSourceBuffer(&buffer);
+	voiceArr[0].voice->SubmitSourceBuffer(&buffer);
 
 	// Play the sound
-	voice->Start(0);
+	voiceArr[0].voice->Start(0);
 
 	// Delete the reference to the WCHAR string
 	delete[] filePathWCHAR;
@@ -142,18 +144,18 @@ bool AudioManager::init()
 	wave.nBlockAlign = NUM_CHANNELS * BITSPERSSAMPLE / 8;
 	wave.nAvgBytesPerSec = SAMPLESPERSEC * wave.nBlockAlign;
 
-	// Make a source voice
-	xAudio2->CreateSourceVoice(&voice, &wave, 0, XAUDIO2_DEFAULT_FREQ_RATIO);
-	voice->SetVolume(VOLUME);
-
 	// Initialize the array of voices
-	//for (int idx = 0; idx < MAX_CONCURRENT_SOUNDS; idx++)
-	//{
-	//	XAudioVoice* voice = &voiceArr[idx];
-	//	hr = xAudio2->CreateSourceVoice(&voice->voice, &wave, 0, XAUDIO2_DEFAULT_FREQ_RATIO, voice);
-	//	voice->voice->SetVolume(VOLUME);
-	//	if (FAILED(hr)) return false;
-	//}
+	for (int idx = 0; idx < MAX_CONCURRENT_SOUNDS; idx++)
+	{
+		XAudioVoice* voice = &voiceArr[idx];
+		hr = xAudio2->CreateSourceVoice(&voice->voice, &wave, 0, XAUDIO2_DEFAULT_FREQ_RATIO, voice);
+		voice->voice->SetVolume(VOLUME);
+		if (FAILED(hr))
+		{
+			std::cout << "Failed at voice creation" << std::endl;
+			return false;
+		}
+	}
 
 	// Everything has been set up successfully, return true
 	return true;

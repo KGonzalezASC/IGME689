@@ -64,28 +64,30 @@ constexpr WORD MAX_SOUND_PATH_LENGTH = 256;												 // Maximum sound path si
 //};
 
 // XAudioVoice struct
-//struct XAudioVoice : IXAudio2VoiceCallback
-//{
-//	bool playing;
-//
-//	void OnStreamEnd() noexcept
-//	{
-//		voice->Stop();
-//		playing = false;
-//	}
-//
-//	void OnBufferStart(void* pBufferContext) noexcept
-//	{
-//		playing = true;
-//	}
-//
-//	// Methods that need to be defined but not scripted, could do cool stuff with them later
-//	void OnVoiceProcessingPassEnd() noexcept {}
-//	void OnVoiceProcessingPassStart(UINT32 SamplesRequired) noexcept {}
-//	void OnBufferEnd(void* pBufferContext) noexcept {}
-//	void OnLoopEnd(void* pBufferContext) noexcept {}
-//	void OnVoiceError(void* pBufferContext, HRESULT error) noexcept {}
-//};
+struct XAudioVoice : IXAudio2VoiceCallback
+{
+public:
+	bool playing = false;
+	IXAudio2SourceVoice* voice;
+
+	void OnStreamEnd() noexcept
+	{
+		voice->Stop();
+		playing = false;
+	}
+
+	void OnBufferStart(void* pBufferContext) noexcept
+	{
+		playing = true;
+	}
+
+	// Methods that need to be defined but not scripted, could do cool stuff with them later
+	void OnVoiceProcessingPassEnd() noexcept {}
+	void OnVoiceProcessingPassStart(UINT32 SamplesRequired) noexcept {}
+	void OnBufferEnd(void* pBufferContext) noexcept {}
+	void OnLoopEnd(void* pBufferContext) noexcept {}
+	void OnVoiceError(void* pBufferContext, HRESULT error) noexcept {}
+};
 
 class AudioManager
 {
@@ -96,9 +98,9 @@ public:
 	//void update_audio(float dt);
 
 private:
-	//static XAudioVoice voiceArr[MAX_CONCURRENT_SOUNDS]; Uncomment when multiple voices are used
-	//XAudioVoice* voice;
-	IXAudio2SourceVoice* voice;
+	static XAudioVoice voiceArr[MAX_CONCURRENT_SOUNDS];
+	//struct XAudioVoice* voice;
+	//IXAudio2SourceVoice* voice;
 	IXAudio2* xAudio2;
 	bool init();
 	HRESULT FindChunk(HANDLE hFile, DWORD fourcc, DWORD& dwChunkSize, DWORD& dwChunkDataPosition);
