@@ -1,5 +1,7 @@
 #include "Mesh.h"
 #include "Graphics.h"
+#include <assimp/Importer.hpp>
+#include <assimp/postprocess.h>
 
 using namespace DirectX;
 //implement header / interface
@@ -248,12 +250,14 @@ void Mesh::LoadFBX(const std::wstring& filePath)
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(std::string(filePath.begin(), filePath.end()), aiProcess_Triangulate | aiProcess_ConvertToLeftHanded);
 
-	if (!scene)
+	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 	{
 		// Handle error
 		return;
 	}
 
+	ProcessNode(scene->mRootNode, scene);
+	LoadAnimations(scene);
 	// Process the scene to extract mesh and animation data
 	// This is a simplified example, you need to handle bones, weights, and animations properly
 
@@ -287,6 +291,50 @@ void Mesh::LoadFBX(const std::wstring& filePath)
 	}
 
 	initBuffers(vertices.data(), vertices.size(), indices.data(), indices.size());
+}
+
+void Mesh::ProcessNode(aiNode* node, const aiScene* scene) {
+	for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+		ProcessMesh(mesh, scene);
+	}
+
+	for (unsigned int i = 0; i < node->mNumChildren; i++) {
+		ProcessNode(node->mChildren[i], scene);
+	}
+}
+
+void Mesh::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
+	// Process vertices, indices, and materials here...
+
+	// Load bones
+	LoadBones(mesh, bones);
+}
+
+void Mesh::LoadBones(aiMesh* mesh, std::vector<Bone>& bones) {
+	for (unsigned int i = 0; i < mesh->mNumBones; i++) {
+		aiBone* aiBone = mesh->mBones[i];
+		Bone bone;
+		bone.name = aiBone->mName.C_Str();
+		bone.offsetMatrix = DirectX::XMMatrixTranspose(DirectX::XMMATRIX(&aiBone->mOffsetMatrix.a1));
+		bones.push_back(bone);
+	}
+}
+
+void Mesh::LoadAnimations(const aiScene* scene) {
+	for (unsigned int i = 0; i < scene->mNumAnimations; i++) {
+		aiAnimation* aiAnim = scene->mAnimations[i];
+		Animation anim;
+		anim.name = aiAnim->mName.C_Str();
+		anim.duration = static_cast<float>(aiAnim->mDuration);
+		anim.ticksPerSecond = static_cast<float>(aiAnim->mTicksPerSecond ? aiAnim->mTicksPerSecond : 25.0f);
+		animations.push_back(anim);
+	}
+}
+
+void Mesh::UpdateAnimation(float deltaTime) {
+	animationTime += deltaTime;
+	// Update bone transformations based on the current animation time
 }
 
 

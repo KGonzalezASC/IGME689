@@ -31,3 +31,9 @@ void GameObject::Draw(std::shared_ptr<Camera> camera)
 	material->PrepareMaterial(transform, camera);
 	mesh->Draw();
 }
+
+void GameObject::UpdateAnimation(float deltaTime) {
+	if (mesh) {
+		mesh->UpdateAnimation(deltaTime);
+	}
+}

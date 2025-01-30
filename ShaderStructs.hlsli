@@ -8,6 +8,8 @@ struct VertexShaderInput
     float3 localPosition : POSITION;
     float2 uv : TEXCOORD;
     float3 normal : NORMAL;
+    uint4 boneIndices : BONEINDICES;
+    float4 boneWeights : BONEWEIGHTS;
     //float3 tangent : TANGENT;
 };
 

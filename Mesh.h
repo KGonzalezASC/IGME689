@@ -15,6 +15,19 @@
 
 
 
+struct Bone {
+    std::string name;
+    DirectX::XMMATRIX offsetMatrix;
+    DirectX::XMMATRIX finalTransformation;
+};
+
+struct Animation {
+    std::string name;
+    float duration;
+    float ticksPerSecond;
+    std::vector<Bone> bones;
+};
+
 
 class Mesh
 {
@@ -26,7 +39,16 @@ class Mesh
     const char* name;
 
     void initBuffers(Vertex* vertices, size_t numVerts, unsigned int* indexArray, size_t numIndices);
-    void LoadFBX(const std::wstring& filePath);
+    
+    //animation support
+    std::vector<Bone> bones;
+    std::vector<Animation> animations;
+    float animationTime;
+
+    void ProcessNode(aiNode* node, const aiScene* scene);
+    void ProcessMesh(aiMesh* mesh, const aiScene* scene);
+    void LoadBones(aiMesh* mesh, std::vector<Bone>& bones);
+    void LoadAnimations(const aiScene* scene);
 
     //copy ctor
 	//Mesh(const Mesh& mesh);
@@ -34,10 +56,17 @@ class Mesh
 	//Mesh& operator=(const Mesh& mesh);
 
  public:
+
+     
+     //animation support
+     void LoadFBX(const std::wstring& filePath);
+     void UpdateAnimation(float deltaTime);
+     
+
 	//mesh needs device and context to create buffers
     Mesh(const char* name, Vertex* vertexBuffer, int, unsigned int* indexBuffer, int);
     //obj ctor
-	Mesh(const char* name, const std::wstring& objFile);
+	//Mesh(const char* name, const std::wstring& objFile);
 
     Mesh(const char* name, const std::wstring& fbxFile, bool isFBX);
 

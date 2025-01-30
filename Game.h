@@ -27,6 +27,7 @@ public:
 	void Update(float deltaTime, float totalTime);
 	void Draw(float deltaTime, float totalTime);
 	void OnResize();
+	void UpdateAnimations(float deltaTime);
 
 	
 private:

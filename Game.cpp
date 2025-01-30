@@ -35,7 +35,7 @@ void Game::Initialize()
 
 
 	//CreateGeometry(); //updating for A03
-	LoadFBX(FixPath(L"../../Assets/Models/TestCube.fbx").c_str());
+	LoadFBX(FixPath(L"../../Assets/Models/optoBee.fbx").c_str());
 	// Set initial graphics API state pipeline settings
 	{
 		Graphics::Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -221,7 +221,9 @@ void Game::Update(float deltaTime, float totalTime)
 	//reallocate the constant buffer for world matrix because it is per object and it is dirty
 	//stoping rotation for now to test above claim
 	//entities[0]->GetTransform()->Rotate(0, 0, deltaTime);
+
 	cameras[activeCamera]->Update(deltaTime);
+	UpdateAnimations(deltaTime);
 	updateUi(deltaTime);
 }
 
@@ -278,4 +280,9 @@ void Game::Draw(float deltaTime, float totalTime)
 }
 
 
+void Game::UpdateAnimations(float deltaTime) {
+	for (auto& entity : entities) {
+		entity->UpdateAnimation(deltaTime);
+	}
+}
 
