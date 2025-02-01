@@ -76,12 +76,6 @@ public:
 		playing = false;
 	}
 
-	void OnBufferStart(void* pBufferContext) noexcept
-	{
-		playing = true;
-	}
-
-
 	// TEMP: Delete the audio data from the buffer. pBufferContext is set to the buffer's pAudioData var in playSound(), so this
 	// should ideally always free up that memory. Will be replaced with audio pooling and caching later down the line,
 	// I just don't like seeing really big memory leaks
@@ -91,6 +85,7 @@ public:
 	}
 
 	// Methods that need to be defined but not scripted, could do cool stuff with them later
+	void OnBufferStart(void* pBufferContext) noexcept {};
 	void OnVoiceProcessingPassEnd() noexcept {}
 	void OnVoiceProcessingPassStart(UINT32 SamplesRequired) noexcept {}
 	void OnLoopEnd(void* pBufferContext) noexcept {}

@@ -37,7 +37,6 @@ AudioManager::~AudioManager()
 
 void AudioManager::playSound(const char filePath[MAX_SOUND_PATH_LENGTH])
 {
-
 	// Convert cstring to WCHAR
 	size_t newsize = strlen(filePath) + 1;
 	wchar_t* filePathWCHAR = new wchar_t[newsize];
@@ -79,6 +78,12 @@ void AudioManager::playSound(const char filePath[MAX_SOUND_PATH_LENGTH])
 	BYTE* pDataBuffer = new BYTE[dwChunkSize];
 	ReadChunkData(hFile, pDataBuffer, dwChunkSize, dwChunkPosition);
 
+	// Populate the XAUDIO2_BUFFER structure
+	buffer.AudioBytes = dwChunkSize;  //size of the audio buffer in bytes
+	buffer.pAudioData = pDataBuffer;  //buffer containing audio data
+	buffer.Flags = XAUDIO2_END_OF_STREAM; // tell the source voice not to expect any data after this buffer
+	buffer.pContext = pDataBuffer; // pAudioData is otherwise unaccounted for outside of this method, hold onto its reference for when the buffer ends
+
 	// Check if there are any inactive voices (has to go after file loading since that takes a while)
 	IXAudio2SourceVoice* chosenVoice = nullptr;
 	for (int idx = 0; idx < MAX_CONCURRENT_SOUNDS; idx++)
@@ -87,7 +92,9 @@ void AudioManager::playSound(const char filePath[MAX_SOUND_PATH_LENGTH])
 		// If an inactive voice is found, submit the source buffer to it, play the sound, and break the loop early
 		if (!voice->playing)
 		{
+			std::cout << idx << std::endl;
 			chosenVoice = voice->voice;
+			voice->playing = true;
 			break;
 		}
 	}
@@ -103,12 +110,6 @@ void AudioManager::playSound(const char filePath[MAX_SOUND_PATH_LENGTH])
 		printf("All voices are playing sounds. Skipping audio playback\n");
 		return;
 	}
-
-	// Populate the XAUDIO2_BUFFER structure
-	buffer.AudioBytes = dwChunkSize;  //size of the audio buffer in bytes
-	buffer.pAudioData = pDataBuffer;  //buffer containing audio data
-	buffer.Flags = XAUDIO2_END_OF_STREAM; // tell the source voice not to expect any data after this buffer
-	buffer.pContext = pDataBuffer; // pAudioData is otherwise unaccounted for outside of this method, hold onto its reference for when the buffer ends
 
 	// Play the sound effect
 	chosenVoice->SubmitSourceBuffer(&buffer);
