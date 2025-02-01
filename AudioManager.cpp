@@ -70,42 +70,21 @@ void AudioManager::playSound(const char filePath[MAX_SOUND_PATH_LENGTH])
 	buffer.pAudioData = pDataBuffer;  //buffer containing audio data
 	buffer.Flags = XAUDIO2_END_OF_STREAM; // tell the source voice not to expect any data after this buffer
 
-	// Submit the buffer to the source voice
-	voiceArr[0].voice->SubmitSourceBuffer(&buffer);
-
-	// Play the sound
-	voiceArr[0].voice->Start(0);
+	// Check if there are any inactive voices
+	for (int idx = 0; idx < MAX_CONCURRENT_SOUNDS; idx++)
+	{
+		XAudioVoice* voice = &voiceArr[idx];
+		// If an inactive voice is found, submit the source buffer to it, play the sound, and break the loop early
+		if (!voice->playing)
+		{
+			voice->voice->SubmitSourceBuffer(&buffer);
+			voice->voice->Start(0);
+			break;
+		}
+	}
 
 	// Delete the reference to the WCHAR string
 	delete[] filePathWCHAR;
-
-	// Check if there are any inactive voices
-	//for (int idx = 2; idx < MAX_CONCURRENT_SOUNDS; idx++) // First two voices are reserved for music
-	//{
-	//	XAudioVoice* voice = &voiceArr[idx];
-	//	// If an inactive voice is found, play the sound on it
-	//	if (!voice->playing)
-	//	{
-	//		// TODO: Store the most recently-played sounds to a cache
-	//		HANDLE hFile = CreateFile(
-	//			sound.GetFileName(),
-	//			GENERIC_READ,
-	//			FILE_SHARE_READ,
-	//			NULL,
-	//			OPEN_EXISTING,
-	//			0,
-	//			NULL);
-	//
-	//		DWORD dwChunkSize;
-	//		DWORD dwChunkPosition;
-	//		//check the file type, should be fourccWAVE or 'XWMA'
-	//		FindChunk(hFile, fourccRIFF, dwChunkSize, dwChunkPosition);
-	//		DWORD filetype;
-	//		ReadChunkData(hFile, &filetype, sizeof(DWORD), dwChunkPosition);
-	//		if (filetype != fourccWAVE)
-	//			return S_FALSE;
-	//	}
-	//}
 }
 
 bool AudioManager::init()

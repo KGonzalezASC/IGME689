@@ -49,6 +49,7 @@ void Game::Initialize()
 
 	audioManager = std::make_shared<AudioManager>();
 	audioManager->playSound("Sounds/vine-boom.wav");
+	audioManager->playSound("Sounds/amongus-roundstart.wav");
 }
 
 
