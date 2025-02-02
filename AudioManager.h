@@ -3,6 +3,8 @@
 #include <memory>
 #include <vector>
 #include <iostream>
+#include "Input.h"
+
 #ifdef _XBOX //Big-Endian
 #define fourccRIFF 'RIFF'
 #define fourccDATA 'data'
@@ -41,7 +43,7 @@ constexpr DWORD AUDIOBUFFERSIZEINSAMPLES = SAMPLESPERCYCLE * AUDIOBUFFERSIZEINCY
 constexpr UINT32 AUDIOBUFFERSIZEINBYTES = AUDIOBUFFERSIZEINSAMPLES * BITSPERSSAMPLE / 8; // 4,000 bytes per buffer.
 
 // Other sound-related constants
-constexpr WORD MAX_CONCURRENT_SOUNDS = 16;												 // 16 sounds can play at once.
+constexpr WORD MAX_CONCURRENT_SOUNDS = 32;												 // 16 sounds can play at once.
 static constexpr int SOUNDS_BUFFER_SIZE = 1024000000;                                    // 128 MB sound buffer size. This is needed because sounds (music especially) can have very large file sizes.
 constexpr WORD MAX_SOUND_PATH_LENGTH = 256;												 // Maximum sound path size of 256 characters.
 
@@ -98,7 +100,7 @@ public:
 	AudioManager();
 	~AudioManager();
 	void playSound(const char filePath[MAX_SOUND_PATH_LENGTH]);
-	//void update_audio(float dt);
+	void update_audio(float dt);
 
 private:
 	static XAudioVoice voiceArr[MAX_CONCURRENT_SOUNDS];

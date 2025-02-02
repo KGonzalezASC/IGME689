@@ -48,8 +48,6 @@ void Game::Initialize()
 	cameras.push_back(camera2);
 
 	audioManager = std::make_shared<AudioManager>();
-	audioManager->playSound("Sounds/vine-boom.wav");
-	audioManager->playSound("Sounds/amongus-roundstart.wav");
 }
 
 
@@ -217,6 +215,7 @@ void Game::Update(float deltaTime, float totalTime)
 	//entities[0]->GetTransform()->Rotate(0, 0, deltaTime);
 	cameras[activeCamera]->Update(deltaTime);
 	updateUi(deltaTime);
+	audioManager->update_audio(deltaTime);
 }
 
 
