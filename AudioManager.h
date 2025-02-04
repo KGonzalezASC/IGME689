@@ -22,11 +22,6 @@
 #define fourccXWMA 'AMWX'
 #define fourccDPDS 'sdpd'
 #endif
-/*
-   Much of this code was adapted from YouTube user Cakez's XAudio2 tutorial
-   (https://www.youtube.com/watch?v=38A6WmBvxHM), so credit to them for this
-*/
-
 
 // Constant literals
 constexpr WORD BITSPERSSAMPLE = 16;                                                      // 16 bits per sample.
@@ -44,26 +39,41 @@ constexpr UINT32 AUDIOBUFFERSIZEINBYTES = AUDIOBUFFERSIZEINSAMPLES * BITSPERSSAM
 
 // Other sound-related constants
 constexpr WORD MAX_CONCURRENT_SOUNDS = 32;												 // 16 sounds can play at once.
+constexpr WORD MAX_SOUND_CACHE_SIZE = 16;
 static constexpr int SOUNDS_BUFFER_SIZE = 1024000000;                                    // 128 MB sound buffer size. This is needed because sounds (music especially) can have very large file sizes.
 constexpr WORD MAX_SOUND_PATH_LENGTH = 256;												 // Maximum sound path size of 256 characters.
 
 // Sound struct
-//struct Sound
-//{
-//private:
-//	WCHAR fileName[MAX_SOUND_PATH_LENGTH];
-//	UINT32 size;
-//
-//public:
-//	WCHAR* GetFileName()
-//	{
-//		return fileName;
-//	}
-//	//Sound(char fileName[MAX_SOUND_PATH_LENGTH])
-//	//{
-//	//
-//	//}
-//};
+struct Sound
+{
+private:
+	char filePath[MAX_SOUND_PATH_LENGTH];
+	XAUDIO2_BUFFER* audioBuffer;
+
+public:
+	int numOfPlayingVoices;
+	char* GetFilePath()
+	{
+		return filePath;
+	}
+
+	XAUDIO2_BUFFER* GetBuffer()
+	{
+		return audioBuffer;
+	}
+
+	Sound(char fileName[MAX_SOUND_PATH_LENGTH], XAUDIO2_BUFFER* buffer)
+	{
+		numOfPlayingVoices = 0;
+		strcpy_s(filePath, fileName);
+		audioBuffer = buffer;
+	}
+
+	~Sound()
+	{
+		delete audioBuffer;
+	}
+};
 
 // XAudioVoice struct
 struct XAudioVoice : IXAudio2VoiceCallback
@@ -78,16 +88,21 @@ public:
 		playing = false;
 	}
 
+
+	void OnBufferStart(void* pBufferContext) noexcept
+	{
+		((Sound*)pBufferContext)->numOfPlayingVoices++;
+	};
+
 	// TEMP: Delete the audio data from the buffer. pBufferContext is set to the buffer's pAudioData var in playSound(), so this
 	// should ideally always free up that memory. Will be replaced with audio pooling and caching later down the line,
 	// I just don't like seeing really big memory leaks
 	void OnBufferEnd(void* pBufferContext) noexcept
 	{
-		delete[] pBufferContext;
+		((Sound*)pBufferContext)->numOfPlayingVoices--;
 	}
 
 	// Methods that need to be defined but not scripted, could do cool stuff with them later
-	void OnBufferStart(void* pBufferContext) noexcept {};
 	void OnVoiceProcessingPassEnd() noexcept {}
 	void OnVoiceProcessingPassStart(UINT32 SamplesRequired) noexcept {}
 	void OnLoopEnd(void* pBufferContext) noexcept {}
@@ -101,14 +116,13 @@ public:
 	~AudioManager();
 	void playSound(const char filePath[MAX_SOUND_PATH_LENGTH]);
 	void update_audio(float dt);
+	Sound* createSound(char fileName[MAX_SOUND_PATH_LENGTH], XAUDIO2_BUFFER* buffer);
 
 private:
 	static XAudioVoice voiceArr[MAX_CONCURRENT_SOUNDS];
-	//struct XAudioVoice* voice;
-	//IXAudio2SourceVoice* voice;
 	IXAudio2* xAudio2;
+	static Sound cachedSounds[MAX_SOUND_CACHE_SIZE];
 	bool init();
 	HRESULT FindChunk(HANDLE hFile, DWORD fourcc, DWORD& dwChunkSize, DWORD& dwChunkDataPosition);
 	HRESULT ReadChunkData(HANDLE hFile, void* buffer, DWORD buffersize, DWORD bufferoffset);
 };
-

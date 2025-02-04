@@ -2,6 +2,7 @@
 using namespace Input;
 
 XAudioVoice AudioManager::voiceArr[MAX_CONCURRENT_SOUNDS];
+Sound AudioManager::cachedSounds[MAX_SOUND_CACHE_SIZE];
 
 AudioManager::AudioManager()
 {
@@ -83,7 +84,6 @@ void AudioManager::playSound(const char filePath[MAX_SOUND_PATH_LENGTH])
 	buffer.AudioBytes = dwChunkSize;  //size of the audio buffer in bytes
 	buffer.pAudioData = pDataBuffer;  //buffer containing audio data
 	buffer.Flags = XAUDIO2_END_OF_STREAM; // tell the source voice not to expect any data after this buffer
-	buffer.pContext = pDataBuffer; // pAudioData is otherwise unaccounted for outside of this method, hold onto its reference for when the buffer ends
 
 	// Check if there are any inactive voices (has to go after file loading since that takes a while)
 	IXAudio2SourceVoice* chosenVoice = nullptr;
@@ -112,9 +112,24 @@ void AudioManager::playSound(const char filePath[MAX_SOUND_PATH_LENGTH])
 		return;
 	}
 
+	// Create a sound struct
+	Sound* newSound = createSound(filePath, &buffer);
+	buffer.pContext = &newSound; // stores reference to the Sound struct that hold this buffer
+
 	// Play the sound effect
-	chosenVoice->SubmitSourceBuffer(&buffer);
+	chosenVoice->SubmitSourceBuffer(newSound->GetBuffer());
 	chosenVoice->Start(0);
+
+	// Add the sound struct to any open part of the cache
+	for (int idx = 0; idx < MAX_SOUND_CACHE_SIZE; idx++)
+	{
+		if (cachedSounds[idx].numOfPlayingVoices == 0)
+		{
+			delete &cachedSounds[idx];
+			cachedSounds[idx] = *newSound;
+			break;
+		}
+	}
 
 	// Delete the reference to the WCHAR string
 	delete[] filePathWCHAR;
@@ -258,4 +273,10 @@ HRESULT AudioManager::ReadChunkData(HANDLE hFile, void* buffer, DWORD buffersize
 	if (0 == ReadFile(hFile, buffer, buffersize, &dwRead, NULL))
 		hr = HRESULT_FROM_WIN32(GetLastError());
 	return hr;
+}
+
+Sound* AudioManager::createSound(char fileName[MAX_SOUND_PATH_LENGTH], XAUDIO2_BUFFER* buffer)
+{
+	Sound* newSound = new Sound(fileName, buffer);
+	return newSound;
 }
