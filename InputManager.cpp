@@ -21,7 +21,7 @@ void InputManager::Initialize(HWND windowHandle)
 	
 	memset(kbState, 0, sizeof(unsigned char) * 256);
 	memset(prevKbState, 0, sizeof(unsigned char) * 256);
-
+	
 	wheelDelta = 0.0f;
 	mouseX = 0; mouseY = 0;
 	prevMouseX = 0; prevMouseY = 0;
@@ -43,8 +43,13 @@ void InputManager::Initialize(HWND windowHandle)
 	InputActionManager::CreateAction(L"Test");
 
 	InputActionManager::AssignBindingToAction(L"Test", InputBindings::KeyW);
+	InputActionManager::AssignBindingToAction(L"Test", InputBindings::KeyS);
 
-	InputActionManager::GetAction(L"Test").OnTrigger.push_back([]() { std::cout << "WIN" << std::endl; });
+	InputActionManager::GetAction(L"Test").OnTrigger.push_back([](InputActionManager::InputData data) 
+		{ 
+			if (data.inputType == InputActionManager::InputType::Pressed)
+				std::cout << data.key << " was " << data.inputType << std::endl; 
+		});
 }
 
 // ---------------------------------------------------

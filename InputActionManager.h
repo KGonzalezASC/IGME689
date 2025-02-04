@@ -113,7 +113,13 @@ namespace InputActionManager
 		Released,
 	};
 
-	typedef std::function<void()> ActionEvent;
+	struct InputData
+	{
+		InputType inputType;
+		InputBindings key;
+	};
+
+	typedef std::function<void(InputData)> ActionEvent;
 
 	// ===== | Structs | =====
 	struct InputAction
@@ -143,12 +149,6 @@ namespace InputActionManager
 		{
 			return wcscmp(name, other.name) == 0;
 		}
-	};
-
-	struct InputData
-	{
-		InputType inputType;
-		InputBindings key;
 	};
 
 	// ===== | Methods | =====

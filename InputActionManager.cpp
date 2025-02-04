@@ -147,14 +147,17 @@ namespace InputActionManager
 
 			}
 
+			InputData data = {};
+			data.inputType = inputType;
+			data.key = input;
+
 			// Loop through all the actions associated with this binding
 			for (auto& actionName : binding.second)
 			{
 				InputAction& action = actions.at(actionName);
 				for (auto& event : action.OnTrigger)
 				{
-					if (inputType == InputType::Pressed)
-						event();
+					event(data);			
 				}
 			}
 		}
