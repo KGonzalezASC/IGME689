@@ -1,7 +1,7 @@
 #pragma once
 
 #include "InputActionManager.h"
-#include "Xinput.h"
+#include <Xinput.h>
 
 class XInputManager
 {
@@ -21,6 +21,8 @@ private:
 public:
 	XInputManager();
 	~XInputManager();
+	void CheckControllerState(DWORD dwUserIndex);
 
 private:
+	
 };

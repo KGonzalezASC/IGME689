@@ -5,7 +5,11 @@
 
 #include <iostream>
 
+#include "XInputManager.h"
+
 using InputActionManager::InputBindings;
+
+XInputManager manager;
 
 // ---------------------------------------------------
 //  Initializes the input variables and sets up the
@@ -39,6 +43,8 @@ void InputManager::Initialize(HWND windowHandle)
 
 	// ND: Initialize the Action Manager
 	InputActionManager::Initialize();
+
+	manager = XInputManager();
 
 	InputActionManager::CreateAction(L"Test");
 
@@ -92,6 +98,13 @@ void InputManager::Update()
 	mouseYDelta = mouseY - prevMouseY;
 
 	InputActionManager::CheckActionBindings();
+	
+	for (DWORD i = 0; i < XUSER_MAX_COUNT; ++i)
+	{
+		manager.CheckControllerState(i);
+	}
+
+	
 }
 
 // ----------------------------------------------------------
