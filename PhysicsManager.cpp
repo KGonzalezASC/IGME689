@@ -130,3 +130,19 @@ void PhysicsManager::AddBodyVelocity(BodyID body, Vec3 velocity)
 	// (note that if we had used CreateBody then we could have set the velocity straight on the body before adding it to the physics system)
 	body_interface->SetLinearVelocity(body, velocity);
 }
+
+void PhysicsManager::JoltRayCast(Vec3::ArgType origin, Vec3Arg direction)
+{
+	RayCast raycast{ origin, direction*100 };
+	AnyHitCollisionCollector<RayCastBodyCollector> collector;
+	
+	physics_system.GetBroadPhaseQuery().CastRay(raycast, collector, BroadPhaseLayerFilter(), ObjectLayerFilter());
+	
+	bool hasHit = collector.HadHit();
+
+	if (hasHit)
+	{
+		cout << "AAA" << endl;
+		AddBodyVelocity(collector.mHit.mBodyID, Vec3(0, 10, 0));
+	}
+}

@@ -253,10 +253,13 @@ void Game::Update(float deltaTime, float totalTime)
 
 	if (Input::KeyPress(VK_DELETE))
 	{
-		int matLocation = rand() % materials.size();
+		/*int matLocation = rand() % materials.size();
 
 		newBodies.push_back(physicsManager->CreatePhysicsCubeBody(Vec3(0.0f, 10.0f, 0.0f)));
-		entities.push_back(std::make_shared<GameObject>(meshes[0], materials[matLocation]));
+		entities.push_back(std::make_shared<GameObject>(meshes[0], materials[matLocation]));*/
+		XMFLOAT3 pos = cameras[0]->getTransform().getPosition();
+		XMFLOAT3 forward = cameras[0]->getTransform().getForward();
+		physicsManager->JoltRayCast(Vec3(pos.x, pos.y, pos.z), Vec3Arg(forward.x, forward.y, forward.z));
 	}
 	
 	timeSincePhysicsStep += deltaTime;

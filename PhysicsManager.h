@@ -20,6 +20,12 @@
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 
+#include <Jolt/Physics/Collision/CollisionCollectorImpl.h>
+#include <Jolt/Physics/Collision/BroadPhase/BroadPhase.h>
+#include <Jolt/Physics/Collision/ShapeCast.h>
+#include <Jolt/Physics/Collision/RayCast.h>
+#include <Jolt/Physics/Collision/CastResult.h>
+
 // STL includes
 #include <iostream>
 #include <cstdarg>
@@ -223,6 +229,7 @@ public:
 	BodyID CreatePhysicsSphereBody(RVec3 position);
 	BodyID CreatePhysicsCubeBody(RVec3 position);
 	void AddBodyVelocity(BodyID body, Vec3 velocity);
+	void JoltRayCast(Vec3::ArgType origin, Vec3Arg direction);
 
 	BodyInterface* body_interface;
 
