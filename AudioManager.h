@@ -47,12 +47,13 @@ constexpr WORD MAX_SOUND_PATH_LENGTH = 256;												 // Maximum sound path si
 struct Sound
 {
 private:
-	char filePath[MAX_SOUND_PATH_LENGTH];
+	std::string filePath;
 	XAUDIO2_BUFFER* audioBuffer;
 
 public:
 	int numOfPlayingVoices;
-	char* GetFilePath()
+	bool inCache;
+	std::string GetFilePath()
 	{
 		return filePath;
 	}
@@ -62,11 +63,21 @@ public:
 		return audioBuffer;
 	}
 
-	Sound(char fileName[MAX_SOUND_PATH_LENGTH], XAUDIO2_BUFFER* buffer)
+	// Default constructor, don't use
+	Sound()
+	{
+		numOfPlayingVoices = -1;
+		filePath = "";
+		inCache = false;
+		audioBuffer = nullptr;
+	}
+
+	Sound(std::string fileName, XAUDIO2_BUFFER* buffer)
 	{
 		numOfPlayingVoices = 0;
-		strcpy_s(filePath, fileName);
+		filePath = fileName;
 		audioBuffer = buffer;
+		inCache = false;
 	}
 
 	~Sound()
@@ -94,12 +105,14 @@ public:
 		((Sound*)pBufferContext)->numOfPlayingVoices++;
 	};
 
-	// TEMP: Delete the audio data from the buffer. pBufferContext is set to the buffer's pAudioData var in playSound(), so this
-	// should ideally always free up that memory. Will be replaced with audio pooling and caching later down the line,
-	// I just don't like seeing really big memory leaks
+	// Decrease the number of number of voices playing this sound. If the sound
+	// isn't in any cache, delete it.
 	void OnBufferEnd(void* pBufferContext) noexcept
 	{
-		((Sound*)pBufferContext)->numOfPlayingVoices--;
+		Sound* sound = ((Sound*)pBufferContext);
+		sound->numOfPlayingVoices--;
+		if (!sound->inCache)
+			delete sound;
 	}
 
 	// Methods that need to be defined but not scripted, could do cool stuff with them later
@@ -114,15 +127,17 @@ class AudioManager
 public:
 	AudioManager();
 	~AudioManager();
-	void playSound(const char filePath[MAX_SOUND_PATH_LENGTH]);
+	void playSound(std::string filePath);
 	void update_audio(float dt);
-	Sound* createSound(char fileName[MAX_SOUND_PATH_LENGTH], XAUDIO2_BUFFER* buffer);
+	bool AddSoundToCache(Sound* sound);
+	Sound* createSound(std::string fileName, XAUDIO2_BUFFER* buffer);
 
 private:
 	static XAudioVoice voiceArr[MAX_CONCURRENT_SOUNDS];
 	IXAudio2* xAudio2;
 	static Sound cachedSounds[MAX_SOUND_CACHE_SIZE];
 	bool init();
+	bool PlayBuffer(XAUDIO2_BUFFER* buffer);
 	HRESULT FindChunk(HANDLE hFile, DWORD fourcc, DWORD& dwChunkSize, DWORD& dwChunkDataPosition);
 	HRESULT ReadChunkData(HANDLE hFile, void* buffer, DWORD buffersize, DWORD bufferoffset);
 };

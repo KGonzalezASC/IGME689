@@ -27,6 +27,12 @@ AudioManager::~AudioManager()
 		}
 	}
 
+	// Delete every sound in the cache
+	for (int idx = 0; idx < MAX_CONCURRENT_SOUNDS; idx++)
+	{
+		delete &cachedSounds[idx];
+	}
+
 	// Release the reference to the XAudio2 engine
 	if (xAudio2)
 	{
@@ -34,23 +40,32 @@ AudioManager::~AudioManager()
 		xAudio2 = nullptr;
 	}
 
+	// Uninitialize COM
 	CoUninitialize();
 }
 
-void AudioManager::playSound(const char filePath[MAX_SOUND_PATH_LENGTH])
+void AudioManager::playSound(std::string filePath)
 {
-	// Convert cstring to WCHAR
-	size_t newsize = strlen(filePath) + 1;
-	wchar_t* filePathWCHAR = new wchar_t[newsize];
-	size_t convertedChars = 0;
-	mbstowcs_s(&convertedChars, filePathWCHAR, newsize, filePath, _TRUNCATE);
+	// Check the cache array for a sound with the same file name.
+	for (int idx = 0; idx < MAX_SOUND_CACHE_SIZE; idx++)
+	{
+		// If one is found, play that sound on an open voice and return early
+		if (filePath == cachedSounds[idx].GetFilePath())
+		{
+			std::cout << "Played " << cachedSounds[idx].GetFilePath() << " from cache idx " << idx << std::endl;
+			PlayBuffer(cachedSounds[idx].GetBuffer());
+			return;
+		}
+	}
 
+	// Otherwise, create a new sound:
 	// Declare WAVEFORMATEX and XAUDIO2_BUFFER structs
 	WAVEFORMATEXTENSIBLE wfx = { 0 };
 	XAUDIO2_BUFFER buffer = { 0 };
 
-	HANDLE hFile = CreateFile(
-		filePathWCHAR,
+	// Load the file
+	HANDLE hFile = CreateFileA(
+		filePath.c_str(),
 		GENERIC_READ,
 		FILE_SHARE_READ,
 		NULL,
@@ -85,54 +100,20 @@ void AudioManager::playSound(const char filePath[MAX_SOUND_PATH_LENGTH])
 	buffer.pAudioData = pDataBuffer;  //buffer containing audio data
 	buffer.Flags = XAUDIO2_END_OF_STREAM; // tell the source voice not to expect any data after this buffer
 
-	// Check if there are any inactive voices (has to go after file loading since that takes a while)
-	IXAudio2SourceVoice* chosenVoice = nullptr;
-	for (int idx = 0; idx < MAX_CONCURRENT_SOUNDS; idx++)
-	{
-		XAudioVoice* voice = &voiceArr[idx];
-		// If an inactive voice is found, submit the source buffer to it, play the sound, and break the loop early
-		if (!voice->playing)
-		{
-			std::cout << idx << std::endl;
-			chosenVoice = voice->voice;
-			voice->playing = true;
-			break;
-		}
-	}
-
-	// If there aren't any open voices, return early
-	if (nullptr == chosenVoice)
-	{
-		// Don't forget to delete the unused memory :)
-		delete[] pDataBuffer;
-		delete[] filePathWCHAR;
-
-		// Print corresponding message and return
-		printf("All voices are playing sounds. Skipping audio playback\n");
-		return;
-	}
-
 	// Create a sound struct
 	Sound* newSound = createSound(filePath, &buffer);
 	buffer.pContext = &newSound; // stores reference to the Sound struct that hold this buffer
 
-	// Play the sound effect
-	chosenVoice->SubmitSourceBuffer(newSound->GetBuffer());
-	chosenVoice->Start(0);
-
-	// Add the sound struct to any open part of the cache
-	for (int idx = 0; idx < MAX_SOUND_CACHE_SIZE; idx++)
+	// If there aren't any open voices and the cache is full, delete the unused memory and return early
+	if (!PlayBuffer(&buffer))
 	{
-		if (cachedSounds[idx].numOfPlayingVoices == 0)
-		{
-			delete &cachedSounds[idx];
-			cachedSounds[idx] = *newSound;
-			break;
-		}
+		// Don't forget to delete the unused memory :)
+		delete[] pDataBuffer;
+		return;
 	}
 
-	// Delete the reference to the WCHAR string
-	delete[] filePathWCHAR;
+	// Add the new sound struct to the cache
+	AddSoundToCache(newSound);
 }
 
 bool AudioManager::init()
@@ -275,8 +256,75 @@ HRESULT AudioManager::ReadChunkData(HANDLE hFile, void* buffer, DWORD buffersize
 	return hr;
 }
 
-Sound* AudioManager::createSound(char fileName[MAX_SOUND_PATH_LENGTH], XAUDIO2_BUFFER* buffer)
+Sound* AudioManager::createSound(std::string fileName, XAUDIO2_BUFFER* buffer)
 {
 	Sound* newSound = new Sound(fileName, buffer);
 	return newSound;
+}
+
+bool AudioManager::PlayBuffer(XAUDIO2_BUFFER* buffer)
+{
+	// Check if there are any inactive voices (has to go after file loading since that takes a while)
+	IXAudio2SourceVoice* chosenVoice = nullptr;
+	for (int idx = 0; idx < MAX_CONCURRENT_SOUNDS; idx++)
+	{
+		XAudioVoice* voice = &voiceArr[idx];
+		// If an inactive voice is found, submit the source buffer to it, play the sound, and break the loop early
+		if (!voice->playing)
+		{
+			std::cout << idx << std::endl;
+			chosenVoice = voice->voice;
+			voice->playing = true;
+			break;
+		}
+	}
+
+	// If all voices are playing, return false
+	if (nullptr == chosenVoice)
+	{
+		// Print corresponding message and return
+		printf("All voices are playing sounds. Skipping audio playback\n");
+		return false;
+	}
+
+	// Otherwise, play the sound and return true
+	chosenVoice->SubmitSourceBuffer(buffer);
+	chosenVoice->Start(0);
+	return true;
+}
+
+bool AudioManager::AddSoundToCache(Sound* sound)
+{
+	// Search the cache array for a non-playing sound or an empty spot
+	int nonPlayingSoundIdx = -1;
+	for (int idx = 0; idx < MAX_SOUND_CACHE_SIZE; idx++)
+	{
+		// If a sound isn't being played on any voices, store its index to the corresponding value
+		if (cachedSounds[idx].numOfPlayingVoices == 0 && nonPlayingSoundIdx < 0)
+			nonPlayingSoundIdx = idx;
+		// If an empty spot in the array is found, store the corresponding data there and return true
+		else if (&cachedSounds[idx] == nullptr)
+		{
+			cachedSounds[idx] = *sound;
+			sound->inCache = true;
+			std::cout << "Added " << sound->GetFilePath() << " to idx " << idx << std::endl;
+			return true;
+		}
+	}
+
+	// If a non-playing sound is found, delete it, replace it with the provided sound, and return true
+	if (nonPlayingSoundIdx >= 0)
+	{
+		delete& cachedSounds[nonPlayingSoundIdx];
+		cachedSounds[nonPlayingSoundIdx] = *sound;
+		sound->inCache = true;
+		std::cout << "Overwrote the sound at idx " << nonPlayingSoundIdx << " with " << sound->GetFilePath() << std::endl;
+		return true;
+	}
+	// Otherwise, the cache is full. Print a corresponding message and return false
+	else
+	{
+		printf("The cache is full. The sound will not be cached.");
+		return false;
+	}
 }
