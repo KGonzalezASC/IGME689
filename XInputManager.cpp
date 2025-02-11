@@ -1,6 +1,8 @@
 #include "XInputManager.h"
 #include <iostream>
 
+XInputManager * XInputManager::Instance = nullptr;
+
 XInputManager::XInputManager()
 {
 }
@@ -8,6 +10,17 @@ XInputManager::XInputManager()
 XInputManager::~XInputManager()
 {
 }
+
+
+void XInputManager::Initialize()
+{
+    Instance = new XInputManager();
+}
+
+void XInputManager::UpdateControllerStates()
+{
+}
+
 
 void XInputManager::CheckControllerState(DWORD dwUserIndex)
 {

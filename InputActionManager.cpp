@@ -1,4 +1,5 @@
 #include "InputActionManager.h"
+#include "XInputManager.h"
 #include <iostream>
 
 namespace InputActionManager
@@ -23,6 +24,10 @@ namespace InputActionManager
 		auto addMouse = [&](InputBindings binding, uint16_t vkCode) {
 			bindings.emplace(binding, BindingPair(Mouse, vkCode));
 			};
+
+		auto addController = [&](InputBindings binding, uint16_t vkCode) {
+			bindings.emplace(binding, BindingPair(XController, vkCode));
+		};
 
 		// Add keyboard keys
 		addKey(KeyA, 0x41); // 'A' key
@@ -106,6 +111,22 @@ namespace InputActionManager
 		addMouse(MouseMiddleButton, VK_MBUTTON);
 		addMouse(MouseWheelUp, 0); // Custom code for mouse wheel up
 		addMouse(MouseWheelDown, 0); // Custom code for mouse wheel down
+
+		// Add controller buttons
+		addController(XControllerA, 0x1000);
+		addController(XControllerB, 0x2000);
+		addController(XControllerX, 0x4000);
+		addController(XControllerY, 0x8000);
+		addController(XControllerDPadUp, 0x0001);
+		addController(XControllerDPadDown, 0x0002);
+		addController(XControllerDPadLeft, 0x0004);
+		addController(XControllerDPadRight, 0x0008);
+		addController(XControllerStart, 0x0010);
+		addController(XControllerBack, 0x0020);
+		addController(XControllerLeftThumb, 0x0040);
+		addController(XControllerRightThumb, 0x0080);
+		addController(XControllerLeftShoulder, 0x0100);
+		addController(XControllerRightShoulder, 0x0200);
 	}
 
 
@@ -131,6 +152,11 @@ namespace InputActionManager
 
 	void InputActionManager::CheckActionBindings()
 	{
+		/*for (DWORD i = 0; i < XUSER_MAX_COUNT; ++i)
+		{
+			manager.CheckControllerState(i);
+		}*/
+
 		// Loop through all the bindings in actionBindings
 		for (auto& binding : actionBindings)
 		{
@@ -150,6 +176,7 @@ namespace InputActionManager
 			InputData data = {};
 			data.inputType = inputType;
 			data.key = input;
+			data.controllerIndex = -1;
 
 			// Loop through all the actions associated with this binding
 			for (auto& actionName : binding.second)

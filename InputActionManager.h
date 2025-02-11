@@ -1,4 +1,5 @@
-#pragma once __InputActionManager_h__
+#pragma once 
+
 #include <unordered_map>
 #include <unordered_set>
 #include <set>
@@ -6,7 +7,6 @@
 #include <string>
 #include <memory>
 #include <utility>
-
 #include "InputManager.h"
 
 namespace InputActionManager
@@ -97,13 +97,33 @@ namespace InputActionManager
 
 		// Mouse wheel
 		MouseWheelUp = 77,
-		MouseWheelDown = 78
+		MouseWheelDown = 78,
+
+		// Xinput controller
+		XControllerA = 79,
+		XControllerB = 80,
+		XControllerX = 81,
+		XControllerY = 82,
+		XControllerDPadUp = 83,
+		XControllerDPadDown = 84,
+		XControllerDPadLeft = 85,
+		XControllerDPadRight = 86,
+		XControllerStart = 87,
+		XControllerBack = 88,
+		XControllerLeftThumb = 89,
+		XControllerRightThumb = 90,
+		XControllerLeftShoulder = 91,
+		XControllerRightShoulder = 92,
+
+		XControllerLeftStick = 93,
+		XControllerRightStick = 94,
 	};
 
 	enum InputBindingType
 	{
 		Keyboard,
 		Mouse,
+		XController,
 	};
 	enum InputType
 	{
@@ -117,6 +137,7 @@ namespace InputActionManager
 	{
 		InputType inputType;
 		InputBindings key;
+		uint16_t controllerIndex;
 	};
 
 	typedef std::function<void(InputData)> ActionEvent;
@@ -167,7 +188,6 @@ namespace InputActionManager
 	InputType ProcessMouse(InputBindings mouseInput);
 
 	// ===== | Variables | =====
-
 	extern std::unordered_map<std::wstring, InputAction> actions;
 	extern std::unordered_map<InputBindings, std::pair<InputBindingType, uint16_t>> bindings;
 	extern std::unordered_map<InputBindings, std::unordered_set<std::wstring>> actionBindings;
