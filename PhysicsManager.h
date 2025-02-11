@@ -31,8 +31,6 @@
 #include <cstdarg>
 #include <thread>
 
-#include "gameObject.h"
-
 // Disable common warnings triggered by Jolt, you can use JPH_SUPPRESS_WARNING_PUSH / JPH_SUPPRESS_WARNING_POP to store and restore the warning state
 JPH_SUPPRESS_WARNINGS;
 
@@ -224,12 +222,12 @@ class PhysicsManager
 public:
 	PhysicsManager();
 
-	void JoltPhysicsFrame(std::shared_ptr<GameObject> entity1, std::shared_ptr<GameObject> entity2);
+	void JoltPhysicsFrame();
 	void DeInitPhysics();
-	BodyID CreatePhysicsSphereBody(RVec3 position);
-	BodyID CreatePhysicsCubeBody(RVec3 position);
+	BodyID CreatePhysicsSphereBody(RVec3 position, float size);
+	BodyID CreatePhysicsCubeBody(RVec3 position, Vec3 size);
 	void AddBodyVelocity(BodyID body, Vec3 velocity);
-	void JoltRayCast(Vec3::ArgType origin, Vec3Arg direction);
+	void JoltRayCast(Vec3::ArgType origin, Vec3Arg direction, float length);
 
 	BodyInterface* body_interface;
 
@@ -279,6 +277,4 @@ private:
 
 	// We simulate the physics world in discrete time steps. 60 Hz is a good rate to update the physics system.
 	const float cDeltaTime = 1.0f / 60.0f;
-
-
 };

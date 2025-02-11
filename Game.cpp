@@ -48,6 +48,10 @@ void Game::Initialize()
 	std::shared_ptr<Material> purpleMaterial = std::make_shared<Material>("Purple Solid", pixelShader, vertexShader, XMFLOAT3(0.5f, 0.0f, 0.5f));
 	materials.insert(materials.end(), { purpleMaterial });
 
+	physicsManager = new PhysicsManager();
+	sphere1 = physicsManager->CreatePhysicsSphereBody(RVec3(0.0_r, 20.0_r, 0.0_r),1);
+	physicsManager->AddBodyVelocity(sphere1, Vec3(0.0f, -5.0f, 0.0f));
+	sphere2 = physicsManager->CreatePhysicsSphereBody(RVec3(0.1_r, 0.0_r, 0.1_r),1);
 
 	CreateGeometry(); //updating for A03
 	// Set initial graphics API state pipeline settings
@@ -62,11 +66,6 @@ void Game::Initialize()
 	std::shared_ptr<Camera> camera2 = std::make_shared<Camera>(Window::AspectRatio(), XMFLOAT3(0.5f, 0.0f, -15.0f), XM_PIDIV4, 0.01f, 1000.0f, 5.0f, 0.0055f);
 	camera2.get()->getTransform().moveRelative(0.5f, 0.0f, 0.0f);
 	cameras.push_back(camera2);
-
-	physicsManager = new PhysicsManager();
-	sphere1 = physicsManager->CreatePhysicsSphereBody(RVec3(0.0_r, 20.0_r, 0.0_r));
-	physicsManager->AddBodyVelocity(sphere1, Vec3(0.0f, -5.0f, 0.0f));
-	sphere2 = physicsManager->CreatePhysicsSphereBody(RVec3(0.1_r, 0.0_r, 0.1_r));
 }
 
 
@@ -110,8 +109,8 @@ void Game::CreateGeometry()
 	{
 		for (auto& mesh : meshes)
 		{
-			entities.push_back(std::make_shared<GameObject>(mesh, materials[0]));
-			entities.push_back(std::make_shared<GameObject>(mesh, materials[0]));
+			entities.push_back(std::make_shared<GameObject>(mesh, materials[0], sphere1));
+			entities.push_back(std::make_shared<GameObject>(mesh, materials[0], sphere2));
 		}
 	}
 }
@@ -246,58 +245,34 @@ void Game::Update(float deltaTime, float totalTime)
 	cameras[activeCamera]->Update(deltaTime);
 	updateUi(deltaTime);
 
-	//if (Input::KeyPress(VK_DELETE))
-	//{
-	//	physicsManager->AddBodyVelocity(sphere1, Vec3(0.0f, 5.0f, 0.0f));
-	//}
-
 	if (Input::KeyPress(VK_DELETE))
 	{
 		int matLocation = rand() % materials.size();
-
-		entities.push_back(std::make_shared<GameObject>(meshes[0], materials[matLocation], physicsManager->CreatePhysicsCubeBody(Vec3(0.0f, 10.0f, 0.0f))));
+		entities.push_back(std::make_shared<GameObject>(meshes[0], materials[matLocation], physicsManager->CreatePhysicsCubeBody(Vec3(0.0f, 10.0f, 0.0f), Vec3(1,1,1))));
 	}
 
 	if (Input::KeyPress(VK_INSERT))
 	{
 		XMFLOAT3 pos = cameras[0]->getTransform().getPosition();
 		XMFLOAT3 forward = cameras[0]->getTransform().getForward();
-		physicsManager->JoltRayCast(Vec3(pos.x, pos.y, pos.z), Vec3Arg(forward.x, forward.y, forward.z));
+		physicsManager->JoltRayCast(Vec3(pos.x, pos.y, pos.z), Vec3Arg(forward.x, forward.y, forward.z),100);
 	}
 	
 	timeSincePhysicsStep += deltaTime;
 
 	while (timeSincePhysicsStep >= cDeltaTime && runPhysics)
 	{
-		physicsManager->JoltPhysicsFrame(entities[0],entities[1]);
+		physicsManager->JoltPhysicsFrame();
 		timeSincePhysicsStep -= cDeltaTime;
 
 		// Next step
 		++step;
-		
-		// Output current position and velocity of the sphere
-		RVec3 position = physicsManager->body_interface->GetCenterOfMassPosition(sphere1);
-		Vec3 rotation = physicsManager->body_interface->GetRotation(sphere1).GetEulerAngles();
-
-		entities[0]->GetTransform()->setPosition(position.GetX(), position.GetY(), position.GetZ());
-		entities[0]->GetTransform()->setRotation(rotation.GetX(), rotation.GetY(), rotation.GetZ());
-
-		//---------------------------
-		position = physicsManager->body_interface->GetCenterOfMassPosition(sphere2);
-		rotation = physicsManager->body_interface->GetRotation(sphere2).GetEulerAngles();
-
-		entities[1]->GetTransform()->setPosition(position.GetX(), position.GetY(), position.GetZ());
-		entities[1]->GetTransform()->setRotation(rotation.GetX(), rotation.GetY(), rotation.GetZ());
 
 		for (auto& entity : entities)
 		{
-			if (entity->usingPhysicsBody)
+			if (entity->GetIsUsingPhysics())
 			{
-				position = physicsManager->body_interface->GetCenterOfMassPosition(entity->GetPhysicsBody());
-				rotation = physicsManager->body_interface->GetRotation(entity->GetPhysicsBody()).GetEulerAngles();
-
-				entity->GetTransform()->setPosition(position.GetX(), position.GetY(), position.GetZ());
-				entity->GetTransform()->setRotation(rotation.GetX(), rotation.GetY(), rotation.GetZ());
+				entity->UpdateTransformFromPhysicsBody(physicsManager);
 			}
 		}
 	}

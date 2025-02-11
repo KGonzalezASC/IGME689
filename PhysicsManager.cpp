@@ -96,7 +96,7 @@ void PhysicsManager::DeInitPhysics()
 }
 
 //Runs a step of the physics simulation
-void PhysicsManager::JoltPhysicsFrame(std::shared_ptr<GameObject> entity1, std::shared_ptr<GameObject> entity2)
+void PhysicsManager::JoltPhysicsFrame()
 {
 	// If you take larger steps than 1 / 60th of a second you need to do multiple collision steps in order to keep the simulation stable. Do 1 collision step per 1 / 60th of a second (round up).
 	const int cCollisionSteps = 1;
@@ -106,22 +106,22 @@ void PhysicsManager::JoltPhysicsFrame(std::shared_ptr<GameObject> entity1, std::
 }
 
 //creates a sphere body and adds it to the physics sim
-BodyID PhysicsManager::CreatePhysicsSphereBody(RVec3 position)
+BodyID PhysicsManager::CreatePhysicsSphereBody(RVec3 position, float size)
 {
 	// Now create a dynamic body to bounce on the floor
 	// Note that this uses the shorthand version of creating and adding a body to the world
-	BodyCreationSettings sphere_settings(new SphereShape(1.0f), position, Quat::sIdentity(), EMotionType::Dynamic, Layers::MOVING);
+	BodyCreationSettings sphere_settings(new SphereShape(size), position, Quat::sIdentity(), EMotionType::Dynamic, Layers::MOVING);
 	BodyID newSphereID = body_interface->CreateAndAddBody(sphere_settings, EActivation::Activate);
 	bodies.push_back(newSphereID);
 	return newSphereID;
 }
 
 //creates a cube body and adds it to the physics sim
-BodyID PhysicsManager::CreatePhysicsCubeBody(RVec3 position)
+BodyID PhysicsManager::CreatePhysicsCubeBody(RVec3 position, Vec3 size)
 {
 	// Now create a dynamic body to bounce on the floor
 	// Note that this uses the shorthand version of creating and adding a body to the world
-	BodyCreationSettings cube_settings(new BoxShape(Vec3(1.0f,1.0f,1.0f), 1.0f), position, Quat::sIdentity(), EMotionType::Dynamic, Layers::MOVING);
+	BodyCreationSettings cube_settings(new BoxShape(size), position, Quat::sIdentity(), EMotionType::Dynamic, Layers::MOVING);
 	BodyID newSphereID = body_interface->CreateAndAddBody(cube_settings, EActivation::Activate);
 	bodies.push_back(newSphereID);
 	return newSphereID;
@@ -136,9 +136,9 @@ void PhysicsManager::AddBodyVelocity(BodyID body, Vec3 velocity)
 }
 
 //Raycasts from a given point in a given direction -- In testing
-void PhysicsManager::JoltRayCast(Vec3::ArgType origin, Vec3Arg direction)
+void PhysicsManager::JoltRayCast(Vec3::ArgType origin, Vec3Arg direction, float length)
 {
-	RayCast raycast{ origin, direction*100 };
+	RayCast raycast{ origin, direction * length };
 	AllHitCollisionCollector<RayCastBodyCollector> collector;
 	
 	physics_system.GetBroadPhaseQuery().CastRay(raycast, collector, BroadPhaseLayerFilter(), ObjectLayerFilter());

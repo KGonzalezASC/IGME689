@@ -40,13 +40,10 @@ private:
 	std::vector<std::shared_ptr<Camera>> cameras;
 	int activeCamera = 0;
 
-
-
 	//Meshes shared smart pointer
 	std::vector<std::shared_ptr<Mesh>> meshes;
 	std::vector<std::shared_ptr<GameObject>> entities;
 	std::vector<std::shared_ptr<Material>> materials;
-
 
 	// Shaders and shader-related constructs
 	std::shared_ptr<SimplePixelShader> pixelShader;
@@ -54,9 +51,6 @@ private:
 	std::shared_ptr<SimplePixelShader> uvPixelShader;
 	std::shared_ptr<SimplePixelShader> normalPixelShader;
 	std::shared_ptr<SimplePixelShader> customPixelShader;
-
-	
-
 
 	//ImGui
 	bool showDemoWindow = false;

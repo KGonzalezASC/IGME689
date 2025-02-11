@@ -19,6 +19,16 @@ std::shared_ptr<Mesh> GameObject::GetMesh(){return mesh;}
 std::shared_ptr<Transform> GameObject::GetTransform(){return transform;}
 std::shared_ptr<Material> GameObject::GetMaterial() { return material; }
 JPH::BodyID GameObject::GetPhysicsBody() { return physicsBody; }
+bool GameObject::GetIsUsingPhysics() { return usingPhysicsBody; }
+
+void GameObject::UpdateTransformFromPhysicsBody(PhysicsManager* physicsManager)
+{
+	RVec3 position = physicsManager->body_interface->GetCenterOfMassPosition(physicsBody);
+	Vec3 rotation = physicsManager->body_interface->GetRotation(physicsBody).GetEulerAngles();
+
+	GetTransform()->setPosition(position.GetX(), position.GetY(), position.GetZ());
+	GetTransform()->setRotation(rotation.GetX(), rotation.GetY(), rotation.GetZ());
+}
 
 void GameObject::SetMesh(std::shared_ptr<Mesh> mesh)
 {
