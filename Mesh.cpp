@@ -1,5 +1,4 @@
 #include "Mesh.h"
-#include "Graphics.h"
 
 using namespace DirectX;
 //implement header / interface
@@ -260,6 +259,25 @@ void Mesh::Draw() {
 	Graphics::Context->DrawIndexed(this->m_indicesCount, 0, 0);
 }
 
+void Mesh::DrawInstanced(int instanceCount)
+{
+	// Set the vertex buffer (input slot 0)
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+	Graphics::Context->IASetVertexBuffers(0, 1, m_vertexBuffer.GetAddressOf(), &stride, &offset);
+
+	// Set the index buffer
+	Graphics::Context->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+
+	// Set the instance buffer (input slot 1)
+	UINT instanceStride = sizeof(InstanceData);
+	UINT instanceOffset = 0;
+	Graphics::Context->IASetVertexBuffers(1, 1, SharedBuffers::InstanceBuffer.GetAddressOf(), &instanceStride, &instanceOffset);
+
+	// Draw the mesh with instancing
+	Graphics::Context->DrawIndexedInstanced(m_indicesCount, instanceCount, 0, 0, 0);
+}
+
 void Mesh::initBuffers(Vertex* vertices, size_t numVerts, unsigned int* indices, size_t numIndices)
 {
 	//interleave buffer (x,y,z,color) // vertex buffer this might move later to draw once vertices move due to animation /movement
@@ -288,4 +306,12 @@ void Mesh::initBuffers(Vertex* vertices, size_t numVerts, unsigned int* indices,
 	initialIndexData.pSysMem = indices;
 	Graphics::Device->CreateBuffer(&ibd, &initialIndexData, m_indexBuffer.GetAddressOf());
 	this->m_indicesCount = (UINT)numIndices;
+
+	D3D11_BUFFER_DESC instanceBufferDesc = {};
+	instanceBufferDesc.Usage = D3D11_USAGE_DYNAMIC; // Writable by CPU
+	instanceBufferDesc.ByteWidth = sizeof(InstanceData) * MAX_INSTANCES;
+	instanceBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	instanceBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+	HRESULT hr = Graphics::Device->CreateBuffer(&instanceBufferDesc, nullptr, SharedBuffers::InstanceBuffer.GetAddressOf());
 }

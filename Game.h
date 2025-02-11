@@ -14,6 +14,10 @@
 #include "ImGui/imgui_impl_dx11.h"
 #include "ImGui/imgui_impl_win32.h"
 
+#include "SharedBuffers.h"
+
+#define NUM_INSTANCES 10
+
 class Game
 {
 public:

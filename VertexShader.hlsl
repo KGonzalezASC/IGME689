@@ -35,12 +35,12 @@ VertexToPixel main( VertexShaderInput input )
 	// Set up output struct
 	VertexToPixel output;
 	
-	//matrix 
-	matrix wvp = mul(projection, mul(view, world));
+	// Use the instance ID to get the correct world matrix
+    matrix wvp = mul(projection, mul(view, instances[input.instanceID].world));
     output.screenPosition = mul(wvp, float4(input.localPosition, 1.0f));
     output.uv = input.uv;
-    //once lights	output.normal = normalize(mul((float3x3)worldInvTrans, input.normal));
     output.normal = input.normal;
-    output.worldPos = mul(world, float4(input.localPosition, 1.0f)).xyz;
+    output.worldPos = mul(instances[input.instanceID].world, float4(input.localPosition, 1.0f)).xyz;
+    
 	return output;
 }

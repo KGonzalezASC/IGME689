@@ -10,9 +10,6 @@
 #include "Graphics.h"
 #include "Vertex.h"
 
-
-
-
 class Mesh
 {
  private:
@@ -46,6 +43,7 @@ class Mesh
 	const char* GetName() { return name; }
 
     void Draw();
+    void DrawInstanced(int instanceCount);
 };
 
 

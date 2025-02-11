@@ -4,6 +4,8 @@
 #include <d3d11.h>
 #include <string>
 #include <wrl/client.h>
+#include <vector>
+#include "SharedBuffers.h"
 
 #pragma comment(lib, "d3d11.lib") //includes library that isnt normally in project
 #pragma comment(lib, "dxgi.lib") //can also be added via Linker -> input -> Additional Dependencies
@@ -35,6 +37,7 @@ namespace Graphics
 	HRESULT Initialize(unsigned int windowWidth, unsigned int windowHeight, HWND windowHandle, bool vsyncIfPossible);
 	void ShutDown();
 	void ResizeBuffers(unsigned int width, unsigned int height);
+	void UpdateInstanceBuffer(const std::vector<InstanceData>& instances);
 
 	// Debug Layer
 	void PrintDebugMessages();

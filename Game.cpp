@@ -80,20 +80,30 @@ void Game::LoadShaders()
 // --------------------------------------------------------
 void Game::CreateGeometry()
 {
+	// Create the mesh
+	std::shared_ptr<Mesh> cube = std::make_shared<Mesh>("cube", FixPath(L"../../Assets/Models/cube.obj").c_str());
+	meshes.push_back(cube);
+
+	// Create a material for the mesh
+	std::shared_ptr<Material> redMaterial = std::make_shared<Material>("Red Solid", pixelShader, vertexShader, XMFLOAT3(1.0f, 0.0f, 0.0f));
+	materials.push_back(redMaterial);
+
+	// Create a single GameObject for the mesh
+	std::shared_ptr<GameObject> cubeObject = std::make_shared<GameObject>(cube, redMaterial);
+	entities.push_back(cubeObject);
+
+	// Create instance data 
+	std::vector<InstanceData> instanceData;
+	for (int i = 0; i < NUM_INSTANCES; ++i)
 	{
-		std::shared_ptr<Mesh> cube = std::make_shared<Mesh>("cube", FixPath(L"../../Assets/Models/cube.obj").c_str());
-		meshes.push_back(cube);
-		meshes.push_back(cube);
+		InstanceData data;
+		// Set up the world matrix for each instance
+		XMStoreFloat4x4(&data.world, XMMatrixTranslation(i * 2.0f, 0.0f, 0.0f));
+		instanceData.push_back(data);
 	}
-	//TODO REORDER WHERE GEOMETRY COMES BEFORE MATERIALS AND ASSIGN SUCH IN INIT. THIS IS BECAUSE THE SKYBOX needs geometry for the cube map
-	{
-		for (auto& mesh : meshes)
-		{
-			entities.push_back(std::make_shared<GameObject>(mesh, materials[0]));
-			entities.push_back(std::make_shared<GameObject>(mesh, materials[0]));
-			entities[1]->GetTransform()->setPosition(XMFLOAT3(5, 0, 0));
-		}
-	}
+
+	// Update the instance buffer with the instance data
+	Graphics::UpdateInstanceBuffer(instanceData);
 }
 
 
@@ -239,11 +249,10 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	//then drawing
 
-	//draw each gameObject instead of mesh 
+	// Draw each GameObject with instancing
 	for (auto& entity : entities)
 	{
-		//set color tint
-		entity->Draw(cameras[activeCamera]);
+		entity->DrawInstanced(cameras[activeCamera], NUM_INSTANCES);
 	}
 
 	//draw ui we have to do this after drawing everything else to ensure sorting

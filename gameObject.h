@@ -7,6 +7,7 @@
 #include "Material.h"
 #include "Transform.h"
 #include "Camera.h"
+#include "SharedBuffers.h"
 
 class GameObject
 {
@@ -20,6 +21,7 @@ class GameObject
 	 void SetMaterial(std::shared_ptr<Material> material);
 	 void SetMesh(std::shared_ptr<Mesh> mesh);
 	 void Draw(std::shared_ptr<Camera> camera);
+	 void DrawInstanced(std::shared_ptr<Camera> camera, int instanceCount);
 
    private:
 	std::shared_ptr<Mesh> mesh;
