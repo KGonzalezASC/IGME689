@@ -95,6 +95,7 @@ void PhysicsManager::DeInitPhysics()
 	Factory::sInstance = nullptr;
 }
 
+//Runs a step of the physics simulation
 void PhysicsManager::JoltPhysicsFrame(std::shared_ptr<GameObject> entity1, std::shared_ptr<GameObject> entity2)
 {
 	// If you take larger steps than 1 / 60th of a second you need to do multiple collision steps in order to keep the simulation stable. Do 1 collision step per 1 / 60th of a second (round up).
@@ -104,6 +105,7 @@ void PhysicsManager::JoltPhysicsFrame(std::shared_ptr<GameObject> entity1, std::
 	physics_system.Update(cDeltaTime, cCollisionSteps, temp_allocator, job_system);
 }
 
+//creates a sphere body and adds it to the physics sim
 BodyID PhysicsManager::CreatePhysicsSphereBody(RVec3 position)
 {
 	// Now create a dynamic body to bounce on the floor
@@ -114,6 +116,7 @@ BodyID PhysicsManager::CreatePhysicsSphereBody(RVec3 position)
 	return newSphereID;
 }
 
+//creates a cube body and adds it to the physics sim
 BodyID PhysicsManager::CreatePhysicsCubeBody(RVec3 position)
 {
 	// Now create a dynamic body to bounce on the floor
@@ -124,6 +127,7 @@ BodyID PhysicsManager::CreatePhysicsCubeBody(RVec3 position)
 	return newSphereID;
 }
 
+//Applied velocity to a given body in the sim
 void PhysicsManager::AddBodyVelocity(BodyID body, Vec3 velocity)
 {
 	// Now you can interact with the dynamic body, in this case we're going to give it a velocity.
@@ -131,10 +135,11 @@ void PhysicsManager::AddBodyVelocity(BodyID body, Vec3 velocity)
 	body_interface->SetLinearVelocity(body, velocity);
 }
 
+//Raycasts from a given point in a given direction -- In testing
 void PhysicsManager::JoltRayCast(Vec3::ArgType origin, Vec3Arg direction)
 {
 	RayCast raycast{ origin, direction*100 };
-	AnyHitCollisionCollector<RayCastBodyCollector> collector;
+	AllHitCollisionCollector<RayCastBodyCollector> collector;
 	
 	physics_system.GetBroadPhaseQuery().CastRay(raycast, collector, BroadPhaseLayerFilter(), ObjectLayerFilter());
 	
@@ -142,7 +147,9 @@ void PhysicsManager::JoltRayCast(Vec3::ArgType origin, Vec3Arg direction)
 
 	if (hasHit)
 	{
-		cout << "AAA" << endl;
-		AddBodyVelocity(collector.mHit.mBodyID, Vec3(0, 10, 0));
+		for (auto& hitBody : collector.mHits)
+		{
+			AddBodyVelocity(hitBody.mBodyID, Vec3(0, 10, 0));
+		}
 	}
 }

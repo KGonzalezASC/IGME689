@@ -68,8 +68,6 @@ private:
 	BodyID sphere1;
 	BodyID sphere2;
 
-	vector<BodyID> newBodies;
-
 	uint step = 0;
 
 	// We simulate the physics world in discrete time steps. 60 Hz is a good rate to update the physics system.

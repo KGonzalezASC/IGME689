@@ -1,20 +1,24 @@
 #include "gameObject.h"
 using namespace DirectX;
 
-
-
-GameObject::GameObject(std::shared_ptr<Mesh> target, std::shared_ptr<Material> material): mesh(target), material(material)
+GameObject::GameObject(std::shared_ptr<Mesh> target, std::shared_ptr<Material> material) : mesh(target), material(material)
 {
 	transform = std::make_shared<Transform>();
+	usingPhysicsBody = false;
 }
 
+GameObject::GameObject(std::shared_ptr<Mesh> target, std::shared_ptr<Material> material, JPH::BodyID physBody): mesh(target), material(material), physicsBody(physBody)
+{
+	transform = std::make_shared<Transform>();
+	usingPhysicsBody = true;
+}
 
 GameObject::~GameObject(){}
 
 std::shared_ptr<Mesh> GameObject::GetMesh(){return mesh;}
 std::shared_ptr<Transform> GameObject::GetTransform(){return transform;}
 std::shared_ptr<Material> GameObject::GetMaterial() { return material; }
-
+JPH::BodyID GameObject::GetPhysicsBody() { return physicsBody; }
 
 void GameObject::SetMesh(std::shared_ptr<Mesh> mesh)
 {

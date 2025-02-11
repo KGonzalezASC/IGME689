@@ -253,10 +253,13 @@ void Game::Update(float deltaTime, float totalTime)
 
 	if (Input::KeyPress(VK_DELETE))
 	{
-		/*int matLocation = rand() % materials.size();
+		int matLocation = rand() % materials.size();
 
-		newBodies.push_back(physicsManager->CreatePhysicsCubeBody(Vec3(0.0f, 10.0f, 0.0f)));
-		entities.push_back(std::make_shared<GameObject>(meshes[0], materials[matLocation]));*/
+		entities.push_back(std::make_shared<GameObject>(meshes[0], materials[matLocation], physicsManager->CreatePhysicsCubeBody(Vec3(0.0f, 10.0f, 0.0f))));
+	}
+
+	if (Input::KeyPress(VK_INSERT))
+	{
 		XMFLOAT3 pos = cameras[0]->getTransform().getPosition();
 		XMFLOAT3 forward = cameras[0]->getTransform().getForward();
 		physicsManager->JoltRayCast(Vec3(pos.x, pos.y, pos.z), Vec3Arg(forward.x, forward.y, forward.z));
@@ -286,13 +289,16 @@ void Game::Update(float deltaTime, float totalTime)
 		entities[1]->GetTransform()->setPosition(position.GetX(), position.GetY(), position.GetZ());
 		entities[1]->GetTransform()->setRotation(rotation.GetX(), rotation.GetY(), rotation.GetZ());
 
-		for (size_t i = 0; i < newBodies.size(); i++)
+		for (auto& entity : entities)
 		{
-			position = physicsManager->body_interface->GetCenterOfMassPosition(newBodies[i]);
-			rotation = physicsManager->body_interface->GetRotation(newBodies[i]).GetEulerAngles();
+			if (entity->usingPhysicsBody)
+			{
+				position = physicsManager->body_interface->GetCenterOfMassPosition(entity->GetPhysicsBody());
+				rotation = physicsManager->body_interface->GetRotation(entity->GetPhysicsBody()).GetEulerAngles();
 
-			entities[i+2]->GetTransform()->setPosition(position.GetX(), position.GetY(), position.GetZ());
-			entities[i+2]->GetTransform()->setRotation(rotation.GetX(), rotation.GetY(), rotation.GetZ());
+				entity->GetTransform()->setPosition(position.GetX(), position.GetY(), position.GetZ());
+				entity->GetTransform()->setRotation(rotation.GetX(), rotation.GetY(), rotation.GetZ());
+			}
 		}
 	}
 
