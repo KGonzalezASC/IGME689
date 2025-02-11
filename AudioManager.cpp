@@ -28,9 +28,10 @@ AudioManager::~AudioManager()
 	}
 
 	// Delete every sound in the cache
-	for (int idx = 0; idx < MAX_CONCURRENT_SOUNDS; idx++)
+	for (int idx = 0; idx < MAX_SOUND_CACHE_SIZE; idx++)
 	{
-		delete &cachedSounds[idx];
+		if (cachedSounds[idx].GetFilePath() != "")
+			delete &cachedSounds[idx];
 	}
 
 	// Release the reference to the XAudio2 engine
@@ -58,62 +59,25 @@ void AudioManager::playSound(std::string filePath)
 		}
 	}
 
-	// Otherwise, create a new sound:
-	// Declare WAVEFORMATEX and XAUDIO2_BUFFER structs
-	WAVEFORMATEXTENSIBLE wfx = { 0 };
-	XAUDIO2_BUFFER buffer = { 0 };
+	// If there are no sounds in the cache with that file name, create a new Sound struct
+	std::cout << filePath << std::endl;
+	Sound* newSound = new Sound(filePath);
 
-	// Load the file
-	HANDLE hFile = CreateFileA(
-		filePath.c_str(),
-		GENERIC_READ,
-		FILE_SHARE_READ,
-		NULL,
-		OPEN_EXISTING,
-		0,
-		NULL);
-
-	DWORD dwChunkSize;
-	DWORD dwChunkPosition;
-
-	//check the file type, should be fourccWAVE or 'XWMA'
-	FindChunk(hFile, fourccRIFF, dwChunkSize, dwChunkPosition);
-	DWORD filetype;
-	ReadChunkData(hFile, &filetype, sizeof(DWORD), dwChunkPosition);
-	if (filetype != fourccWAVE)
-	{
-		std::cout << "File is not fourccWAVE" << std::endl;
-		return;
-	}
-
-	// Locate the FMT chunk, and copy its contents into a WAVEFORMATEX structure 
-	FindChunk(hFile, fourccFMT, dwChunkSize, dwChunkPosition);
-	ReadChunkData(hFile, &wfx, dwChunkSize, dwChunkPosition);
-
-	// Locate the data chunk, and read its contents into a buffer
-	FindChunk(hFile, fourccDATA, dwChunkSize, dwChunkPosition);
-	BYTE* pDataBuffer = new BYTE[dwChunkSize];
-	ReadChunkData(hFile, pDataBuffer, dwChunkSize, dwChunkPosition);
-
-	// Populate the XAUDIO2_BUFFER structure
-	buffer.AudioBytes = dwChunkSize;  //size of the audio buffer in bytes
-	buffer.pAudioData = pDataBuffer;  //buffer containing audio data
-	buffer.Flags = XAUDIO2_END_OF_STREAM; // tell the source voice not to expect any data after this buffer
-
-	// Create a sound struct
-	Sound* newSound = createSound(filePath, &buffer);
-	buffer.pContext = &newSound; // stores reference to the Sound struct that hold this buffer
-
-	// If there aren't any open voices and the cache is full, delete the unused memory and return early
-	if (!PlayBuffer(&buffer))
+	// If there aren't any open voices, delete the sound and return early
+	if (!PlayBuffer(newSound->GetBuffer()))
 	{
 		// Don't forget to delete the unused memory :)
-		delete[] pDataBuffer;
+		delete newSound;
 		return;
 	}
 
 	// Add the new sound struct to the cache
 	AddSoundToCache(newSound);
+
+	// TODO: Allow a sound to be played if there aren't any spots in the cache (have it get
+	// deleted after the sound stops playing)
+	// TODO: Allow a sound to be cached even if it can't be played if there's an empty spot 
+	// in the cache
 }
 
 bool AudioManager::init()
@@ -223,7 +187,6 @@ HRESULT AudioManager::FindChunk(HANDLE hFile, DWORD fourcc, DWORD& dwChunkSize, 
 			break;
 
 		default:
-			//Current error: dwChunkType isn't a fourccRIFF
 			if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, dwChunkDataSize, NULL, FILE_CURRENT))
 				return HRESULT_FROM_WIN32(GetLastError());
 		}
@@ -254,12 +217,6 @@ HRESULT AudioManager::ReadChunkData(HANDLE hFile, void* buffer, DWORD buffersize
 	if (0 == ReadFile(hFile, buffer, buffersize, &dwRead, NULL))
 		hr = HRESULT_FROM_WIN32(GetLastError());
 	return hr;
-}
-
-Sound* AudioManager::createSound(std::string fileName, XAUDIO2_BUFFER* buffer)
-{
-	Sound* newSound = new Sound(fileName, buffer);
-	return newSound;
 }
 
 bool AudioManager::PlayBuffer(XAUDIO2_BUFFER* buffer)
@@ -303,7 +260,7 @@ bool AudioManager::AddSoundToCache(Sound* sound)
 		if (cachedSounds[idx].numOfPlayingVoices == 0 && nonPlayingSoundIdx < 0)
 			nonPlayingSoundIdx = idx;
 		// If an empty spot in the array is found, store the corresponding data there and return true
-		else if (&cachedSounds[idx] == nullptr)
+		else if (cachedSounds[idx].GetBuffer() == nullptr)
 		{
 			cachedSounds[idx] = *sound;
 			sound->inCache = true;
