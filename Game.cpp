@@ -68,7 +68,6 @@ void Game::Initialize()
 	cameras.push_back(camera2);
 }
 
-
 // --------------------------------------------------------
 // Clean up memory or objects created by this class
 // 
@@ -85,8 +84,6 @@ Game::~Game()
 	ImGui::DestroyContext();
 }
 
-
-
 void Game::LoadShaders()
 {
 	vertexShader = std::make_shared<SimpleVertexShader>(Graphics::Device,
@@ -94,7 +91,6 @@ void Game::LoadShaders()
 	pixelShader = std::make_shared<SimplePixelShader>(Graphics::Device,
 		Graphics::Context, FixPath(L"PixelShader.cso").c_str());
 }
-
 
 // --------------------------------------------------------
 // Creates the geometry we're going to draw TEMPORARY
@@ -114,9 +110,6 @@ void Game::CreateGeometry()
 		}
 	}
 }
-
-
-
 
 void Game::OnResize()
 {
@@ -248,14 +241,31 @@ void Game::Update(float deltaTime, float totalTime)
 	if (Input::KeyPress(VK_DELETE))
 	{
 		int matLocation = rand() % materials.size();
-		entities.push_back(std::make_shared<GameObject>(meshes[0], materials[matLocation], physicsManager->CreatePhysicsCubeBody(Vec3(0.0f, 10.0f, 0.0f), Vec3(1,1,1))));
+		
+		BodyID id = physicsManager->CreatePhysicsCubeBody(Vec3(0.0f, 10.0f, 0.0f), Vec3(1, 1, 1));
+		std::shared_ptr<GameObject> entity = std::make_shared<GameObject>(meshes[0], materials[matLocation], id);
+		entities.push_back(entity);
+		bodyObjects[id] = entity.get();
 	}
 
 	if (Input::KeyPress(VK_INSERT))
 	{
 		XMFLOAT3 pos = cameras[0]->getTransform().getPosition();
 		XMFLOAT3 forward = cameras[0]->getTransform().getForward();
-		physicsManager->JoltRayCast(Vec3(pos.x, pos.y, pos.z), Vec3Arg(forward.x, forward.y, forward.z),100);
+		AllHitCollisionCollector<RayCastBodyCollector> collector = physicsManager->JoltRayCast(Vec3(pos.x, pos.y, pos.z), Vec3Arg(forward.x, forward.y, forward.z),100);
+
+		bool hasHit = collector.HadHit();
+
+		if (hasHit)
+		{
+			for (auto& hitBody : collector.mHits)
+			{
+				if (bodyObjects.contains(hitBody.mBodyID))
+				{
+					bodyObjects[hitBody.mBodyID]->SetMaterial(materials[0]);
+				}				
+			}
+		}
 	}
 	
 	timeSincePhysicsStep += deltaTime;

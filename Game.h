@@ -68,6 +68,8 @@ private:
 	const float cDeltaTime = 1.0f / 60.0f;
 	float timeSincePhysicsStep = 0.f;
 	bool runPhysics = false;
+
+	unordered_map<BodyID, GameObject*> bodyObjects;
 };
 
 

@@ -30,6 +30,7 @@
 #include <iostream>
 #include <cstdarg>
 #include <thread>
+#include <unordered_map>
 
 // Disable common warnings triggered by Jolt, you can use JPH_SUPPRESS_WARNING_PUSH / JPH_SUPPRESS_WARNING_POP to store and restore the warning state
 JPH_SUPPRESS_WARNINGS;
@@ -227,10 +228,9 @@ public:
 	BodyID CreatePhysicsSphereBody(RVec3 position, float size);
 	BodyID CreatePhysicsCubeBody(RVec3 position, Vec3 size);
 	void AddBodyVelocity(BodyID body, Vec3 velocity);
-	void JoltRayCast(Vec3::ArgType origin, Vec3Arg direction, float length);
+	AllHitCollisionCollector<RayCastBodyCollector>  JoltRayCast(Vec3::ArgType origin, Vec3Arg direction, float length);
 
 	BodyInterface* body_interface;
-
 private:
 	//-------------JoltPhysics-------------------
 

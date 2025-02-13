@@ -136,20 +136,12 @@ void PhysicsManager::AddBodyVelocity(BodyID body, Vec3 velocity)
 }
 
 //Raycasts from a given point in a given direction -- In testing
-void PhysicsManager::JoltRayCast(Vec3::ArgType origin, Vec3Arg direction, float length)
+AllHitCollisionCollector<RayCastBodyCollector> PhysicsManager::JoltRayCast(Vec3::ArgType origin, Vec3Arg direction, float length)
 {
 	RayCast raycast{ origin, direction * length };
 	AllHitCollisionCollector<RayCastBodyCollector> collector;
 	
 	physics_system.GetBroadPhaseQuery().CastRay(raycast, collector, BroadPhaseLayerFilter(), ObjectLayerFilter());
 	
-	bool hasHit = collector.HadHit();
-
-	if (hasHit)
-	{
-		for (auto& hitBody : collector.mHits)
-		{
-			AddBodyVelocity(hitBody.mBodyID, Vec3(0, 10, 0));
-		}
-	}
+	return collector;
 }
