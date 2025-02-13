@@ -30,7 +30,7 @@ public:
 	// Update all of the inputs that are being inputed 
 	// during the frame on this method being called
 	void UpdateControllerStates();
-	bool CheckButtonState(uint16_t button, int index);
+	InputType CheckButtonState(uint16_t button, int index);
 	static void Initialize();
 private:
 	InputType CheckButtonState(bool currentInput, bool prevInput);

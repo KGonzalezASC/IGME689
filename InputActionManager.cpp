@@ -171,7 +171,11 @@ namespace InputActionManager
 			}
 			else if (type == InputBindingType::XController)
 			{
-
+				if (input >= 79 && input <= 92)
+				{
+					inputType = XInputManager::Instance->CheckButtonState(
+						bindings[input].second, 0); 
+				}
 			}
 
 			InputData data = {};

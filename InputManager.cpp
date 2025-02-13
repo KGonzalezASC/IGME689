@@ -45,8 +45,8 @@ void InputManager::Initialize(HWND windowHandle)
 
 	InputActionManager::CreateAction(L"Test");
 
-	InputActionManager::AssignBindingToAction(L"Test", InputBindings::KeyW);
-	InputActionManager::AssignBindingToAction(L"Test", InputBindings::KeyS);
+	InputActionManager::AssignBindingToAction(L"Test", InputBindings::XControllerA);
+	//InputActionManager::AssignBindingToAction(L"Test", InputBindings::XControllerDPadUp);
 
 	InputActionManager::GetAction(L"Test").OnTrigger.push_back([](InputActionManager::InputData data) 
 		{ 

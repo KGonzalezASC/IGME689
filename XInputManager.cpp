@@ -44,11 +44,11 @@ void XInputManager::UpdateControllerStates()
             bool aButton = (wButtons & XINPUT_GAMEPAD_A) != 0;
             bool bButton = (wButtons & XINPUT_GAMEPAD_B) != 0;
 
-            if (aButton || bButton)
+            /*if (aButton || bButton)
             {
                 std::cout << "Controller " << i << " connected.\n"
                     << "A: " << aButton << " B: " << bButton << std::endl;
-            }
+            }*/
         }
         else
         {
@@ -59,35 +59,42 @@ void XInputManager::UpdateControllerStates()
     }
 }
 
-bool XInputManager::CheckButtonState(uint16_t button, int index)
+InputType XInputManager::CheckButtonState(uint16_t button, int index)
 { 
-    WORD wButtons = controllerStates[index].Gamepad.wButtons;
+    if (controllerStates[index].Gamepad.wButtons != prevConButtonStates[index])
+    {
 
+    }
+
+    WORD wButtons = controllerStates[index].Gamepad.wButtons;
     bool isPressed = (wButtons & button) != 0;
 
     wButtons = prevConButtonStates[index];
-
     bool wasPressed = (wButtons & button) != 0;
 
-    return false;
+    InputType type = CheckButtonState(isPressed, wasPressed);
+
+    std::cout << " State: " << type << std::endl;
+
+    return type;
 }
 
 InputType XInputManager::CheckButtonState(bool currentInput, bool prevInput)
 {
-    if (!currentInput && !prevInput)
-    {
-
-    }
-    else if (!currentInput && !prevInput)
-    {
-
-    }
-    else if (!currentInput && !prevInput)
-    {
-
-    }
-    else
-    {
-
-    }
+    if (currentInput && !prevInput)
+	{
+		return InputType::Pressed;
+	}
+	else if (!currentInput && prevInput)
+	{
+		return InputType::Released;
+	}
+	else if (currentInput && prevInput)
+	{
+		return InputType::Down;
+	}
+	else
+	{
+		return InputType::Up;
+	}
 }
