@@ -125,6 +125,7 @@ namespace InputActionManager
 		Mouse,
 		XController,
 	};
+
 	enum InputType
 	{
 		Up,

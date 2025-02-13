@@ -9,22 +9,29 @@
 #define CONTROLLER_3 2
 #define CONTROLLER_4 3
 
+#define CONTROLLER_CONNECTED 100
+#define CONTROLLER_DISCONNECTED 101
+
+using InputActionManager::InputType;
+
 class XInputManager
 {
 // ===== | Variables | =====
 public:
 	static XInputManager* Instance;
 	XINPUT_STATE* controllerStates = new XINPUT_STATE[4];
+	WORD* prevConButtonStates = new WORD[4];
 private:
 
 // ===== | Methods | =====
 public:
 	XInputManager();
 	~XInputManager();
+	// Update all of the inputs that are being inputed 
+	// during the frame on this method being called
 	void UpdateControllerStates();
-	// This is debug and can eventually be removed
-	void CheckControllerState(DWORD dwUserIndex);
+	bool CheckButtonState(uint16_t button, int index);
 	static void Initialize();
 private:
-	
+	InputType CheckButtonState(bool currentInput, bool prevInput);
 };

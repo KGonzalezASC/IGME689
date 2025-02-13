@@ -5,12 +5,13 @@ XInputManager * XInputManager::Instance = nullptr;
 
 XInputManager::XInputManager()
 {
+
 }
 
 XInputManager::~XInputManager()
 {
-}
 
+}
 
 void XInputManager::Initialize()
 {
@@ -19,45 +20,74 @@ void XInputManager::Initialize()
 
 void XInputManager::UpdateControllerStates()
 {
+    // Iterate over all of the controllers (There can be max, up to 4
+    for (int i = 0; i < XUSER_MAX_COUNT; i++)
+    {
+        // Get the current state of the controller
+        XINPUT_STATE conState = controllerStates[i];
+
+        // Set the previous state of the controller buttons
+        // to the current state of the buttons
+        prevConButtonStates[i] = conState.Gamepad.wButtons;
+
+        // Clear the memeory of the current state of the conState
+        ZeroMemory(&conState, sizeof(XINPUT_STATE));
+
+        // Attempt to retrieve data from the controller
+        DWORD result = XInputGetState(i, &conState);
+
+        // Depending on the result, process accordingly
+        if (result == ERROR_SUCCESS)
+        {
+            WORD wButtons = conState.Gamepad.wButtons;
+
+            bool aButton = (wButtons & XINPUT_GAMEPAD_A) != 0;
+            bool bButton = (wButtons & XINPUT_GAMEPAD_B) != 0;
+
+            if (aButton || bButton)
+            {
+                std::cout << "Controller " << i << " connected.\n"
+                    << "A: " << aButton << " B: " << bButton << std::endl;
+            }
+        }
+        else
+        {
+            // If it didn't succeed, make sure that XInput_State
+            // is set to a null_ptr
+            conState = {};
+        }
+    }
 }
 
+bool XInputManager::CheckButtonState(uint16_t button, int index)
+{ 
+    WORD wButtons = controllerStates[index].Gamepad.wButtons;
 
-void XInputManager::CheckControllerState(DWORD dwUserIndex)
+    bool isPressed = (wButtons & button) != 0;
+
+    wButtons = prevConButtonStates[index];
+
+    bool wasPressed = (wButtons & button) != 0;
+
+    return false;
+}
+
+InputType XInputManager::CheckButtonState(bool currentInput, bool prevInput)
 {
-    XINPUT_STATE state;
-    ZeroMemory(&state, sizeof(XINPUT_STATE));
-
-    // Retrieve the state of the controller from XInput
-    DWORD dwResult = XInputGetState(dwUserIndex, &state);
-
-    if (dwResult == ERROR_SUCCESS)
+    if (!currentInput && !prevInput)
     {
-        // Controller is connected
-        // state.Gamepad will have the input data
-        // For instance:
-        SHORT lx = state.Gamepad.sThumbLX;
-        SHORT ly = state.Gamepad.sThumbLY;
-        SHORT rx = state.Gamepad.sThumbRX;
-        SHORT ry = state.Gamepad.sThumbRY;
 
-        BYTE leftTrigger = state.Gamepad.bLeftTrigger;
-        BYTE rightTrigger = state.Gamepad.bRightTrigger;
+    }
+    else if (!currentInput && !prevInput)
+    {
 
-        WORD wButtons = state.Gamepad.wButtons;
+    }
+    else if (!currentInput && !prevInput)
+    {
 
-        bool aButton = (wButtons & XINPUT_GAMEPAD_A) != 0;
-        bool bButton = (wButtons & XINPUT_GAMEPAD_B) != 0;
-
-        std::cout << "Controller " << dwUserIndex << " connected.\n"
-            << "LX: " << lx << " LY: " << ly
-            << " RX: " << rx << " RY: " << ry << "\n"
-            << "LT: " << (int)leftTrigger
-            << " RT: " << (int)rightTrigger << "\n"
-            << "A: " << aButton << " B: " << bButton << std::endl;
     }
     else
     {
-        // Controller not connected
-        //std::cout << "Controller " << dwUserIndex << " not connected.\n";
+
     }
 }

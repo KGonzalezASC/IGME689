@@ -152,10 +152,7 @@ namespace InputActionManager
 
 	void InputActionManager::CheckActionBindings()
 	{
-		/*for (DWORD i = 0; i < XUSER_MAX_COUNT; ++i)
-		{
-			manager.CheckControllerState(i);
-		}*/
+		
 
 		// Loop through all the bindings in actionBindings
 		for (auto& binding : actionBindings)
@@ -169,6 +166,10 @@ namespace InputActionManager
 				inputType = InputActionManager::ProcessKey(bindings[input].second);
 			}
 			else if (type == InputBindingType::Mouse)
+			{
+
+			}
+			else if (type == InputBindingType::XController)
 			{
 
 			}

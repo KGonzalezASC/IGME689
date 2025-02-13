@@ -41,6 +41,7 @@ void InputManager::Initialize(HWND windowHandle)
 
 	// ND: Initialize the Action Manager
 	InputActionManager::Initialize();
+	XInputManager::Initialize();
 
 	InputActionManager::CreateAction(L"Test");
 
@@ -93,6 +94,7 @@ void InputManager::Update()
 	mouseXDelta = mouseX - prevMouseX;
 	mouseYDelta = mouseY - prevMouseY;
 
+	XInputManager::Instance->UpdateControllerStates();
 	InputActionManager::CheckActionBindings();
 }
 
