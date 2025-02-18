@@ -44,7 +44,7 @@ using namespace JPH::literals;
 // We're also using STL classes in this example
 using namespace std;
 
-#pragma region JoltPhysicsStuffToMove
+#pragma region JoltPhysicsStuff
 // Callback for traces, connect this to your own trace function if you have one
 static void TraceImpl(const char* inFMT, ...)
 {
@@ -222,6 +222,7 @@ class PhysicsManager
 {
 public:
 	PhysicsManager();
+	~PhysicsManager();
 
 	void JoltPhysicsFrame();
 	void DeInitPhysics();
@@ -229,6 +230,7 @@ public:
 	BodyID CreatePhysicsCubeBody(RVec3 position, Vec3 size);
 	void AddBodyVelocity(BodyID body, Vec3 velocity);
 	AllHitCollisionCollector<RayCastBodyCollector>  JoltRayCast(Vec3::ArgType origin, Vec3Arg direction, float length);
+	bool JoltShapeCast(Vec3::ArgType origin, Vec3Arg direction, float length);
 
 	BodyInterface* body_interface;
 private:

@@ -69,6 +69,18 @@ PhysicsManager::PhysicsManager()
 	// You should definitely not call this every frame or when e.g. streaming in a new level section as it is an expensive operation.
 	// Instead insert all new objects in batches instead of 1 at a time to keep the broad phase efficient.
 	physics_system.OptimizeBroadPhase();
+
+	PhysicsSettings settings = physics_system.GetPhysicsSettings();
+	settings.mTimeBeforeSleep = 2.f;
+
+	physics_system.SetPhysicsSettings(settings);
+}
+
+PhysicsManager::~PhysicsManager()
+{
+	delete body_interface;
+	delete temp_allocator;
+	delete job_system;
 }
 
 void PhysicsManager::DeInitPhysics()
@@ -124,6 +136,7 @@ BodyID PhysicsManager::CreatePhysicsCubeBody(RVec3 position, Vec3 size)
 	BodyCreationSettings cube_settings(new BoxShape(size), position, Quat::sIdentity(), EMotionType::Dynamic, Layers::MOVING);
 	BodyID newSphereID = body_interface->CreateAndAddBody(cube_settings, EActivation::Activate);
 	bodies.push_back(newSphereID);
+
 	return newSphereID;
 }
 
@@ -135,7 +148,8 @@ void PhysicsManager::AddBodyVelocity(BodyID body, Vec3 velocity)
 	body_interface->SetLinearVelocity(body, velocity);
 }
 
-//Raycasts from a given point in a given direction -- In testing
+//Raycasts from a given point in a given direction
+//Returns a list of all physics objects hit by the ray
 AllHitCollisionCollector<RayCastBodyCollector> PhysicsManager::JoltRayCast(Vec3::ArgType origin, Vec3Arg direction, float length)
 {
 	RayCast raycast{ origin, direction * length };

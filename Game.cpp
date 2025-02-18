@@ -97,18 +97,13 @@ void Game::LoadShaders()
 // --------------------------------------------------------
 void Game::CreateGeometry()
 {
-	{
-		std::shared_ptr<Mesh> cube = std::make_shared<Mesh>("cube", FixPath(L"../../Assets/Models/cube.obj").c_str());
-		meshes.push_back(cube);
-	}
-	//TODO REORDER WHERE GEOMETRY COMES BEFORE MATERIALS AND ASSIGN SUCH IN INIT. THIS IS BECAUSE THE SKYBOX needs geometry for the cube map
-	{
-		for (auto& mesh : meshes)
-		{
-			entities.push_back(std::make_shared<GameObject>(mesh, materials[0], sphere1));
-			entities.push_back(std::make_shared<GameObject>(mesh, materials[0], sphere2));
-		}
-	}
+	std::shared_ptr<Mesh> cube = std::make_shared<Mesh>("cube", FixPath(L"../../Assets/Models/cube.obj").c_str());
+	std::shared_ptr<Mesh> sphere = std::make_shared<Mesh>("sphere", FixPath(L"../../Assets/Models/sphere.obj").c_str());
+	meshes.push_back(cube);
+	meshes.push_back(sphere);
+
+	entities.push_back(std::make_shared<GameObject>(sphere, materials[0], sphere1));
+	entities.push_back(std::make_shared<GameObject>(sphere, materials[0], sphere2));
 }
 
 void Game::OnResize()
@@ -286,8 +281,6 @@ void Game::Update(float deltaTime, float totalTime)
 			}
 		}
 	}
-
-
 }
 
 

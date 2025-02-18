@@ -71,5 +71,3 @@ private:
 
 	unordered_map<BodyID, GameObject*> bodyObjects;
 };
-
-
