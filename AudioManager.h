@@ -53,7 +53,7 @@ struct Sound
 {
 private:
 	std::string fileName;
-	XAUDIO2_BUFFER* buffer;
+	XAUDIO2_BUFFER buffer;
 
 public:
 	std::string GetFileName()
@@ -62,16 +62,19 @@ public:
 	}
 	XAUDIO2_BUFFER* GetBuffer()
 	{
-		return buffer;
+		return &buffer;
 	}
-	Sound(std::string fileName, XAUDIO2_BUFFER* buffer)
+	Sound(std::string fileName, XAUDIO2_BUFFER buffer)
 	{
 		this->fileName = fileName;
 		this->buffer = buffer;
+		this->buffer.pContext = this;
 	}
 	~Sound()
 	{
-		delete buffer;
+		delete buffer.pAudioData;
+		buffer.pAudioData = nullptr;
+		buffer.pContext = nullptr;
 	}
 };
 
@@ -93,7 +96,7 @@ public:
 	// I just don't like seeing really big memory leaks
 	void OnBufferEnd(void* pBufferContext) noexcept
 	{
-		delete[] pBufferContext;
+		delete (Sound*)pBufferContext;
 	}
 
 	// Methods that need to be defined but not scripted, could do cool stuff with them later
@@ -110,12 +113,11 @@ public:
 	AudioManager();
 	~AudioManager();
 	void playSound(const char filePath[MAX_SOUND_PATH_LENGTH]);
+	Sound* create_sound(const char filePath[MAX_SOUND_PATH_LENGTH]);
 	void update_audio(float dt);
 
 private:
 	static XAudioVoice voiceArr[MAX_CONCURRENT_SOUNDS];
-	//struct XAudioVoice* voice;
-	//IXAudio2SourceVoice* voice;
 	IXAudio2* xAudio2;
 	bool init();
 	HRESULT FindChunk(HANDLE hFile, DWORD fourcc, DWORD& dwChunkSize, DWORD& dwChunkDataPosition);

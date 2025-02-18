@@ -38,53 +38,6 @@ AudioManager::~AudioManager()
 
 void AudioManager::playSound(const char filePath[MAX_SOUND_PATH_LENGTH])
 {
-	// Convert cstring to WCHAR
-	size_t newsize = strlen(filePath) + 1;
-	wchar_t* filePathWCHAR = new wchar_t[newsize];
-	size_t convertedChars = 0;
-	mbstowcs_s(&convertedChars, filePathWCHAR, newsize, filePath, _TRUNCATE);
-
-	// Declare WAVEFORMATEX and XAUDIO2_BUFFER structs
-	WAVEFORMATEXTENSIBLE wfx = { 0 };
-	XAUDIO2_BUFFER buffer = { 0 };
-
-	HANDLE hFile = CreateFile(
-		filePathWCHAR,
-		GENERIC_READ,
-		FILE_SHARE_READ,
-		NULL,
-		OPEN_EXISTING,
-		0,
-		NULL);
-
-	DWORD dwChunkSize;
-	DWORD dwChunkPosition;
-
-	//check the file type, should be fourccWAVE or 'XWMA'
-	FindChunk(hFile, fourccRIFF, dwChunkSize, dwChunkPosition);
-	DWORD filetype;
-	ReadChunkData(hFile, &filetype, sizeof(DWORD), dwChunkPosition);
-	if (filetype != fourccWAVE)
-	{
-		std::cout << "File is not fourccWAVE" << std::endl;
-		return;
-	}
-
-	// Locate the FMT chunk, and copy its contents into a WAVEFORMATEX structure 
-	FindChunk(hFile, fourccFMT, dwChunkSize, dwChunkPosition);
-	ReadChunkData(hFile, &wfx, dwChunkSize, dwChunkPosition);
-
-	// Locate the data chunk, and read its contents into a buffer
-	FindChunk(hFile, fourccDATA, dwChunkSize, dwChunkPosition);
-	BYTE* pDataBuffer = new BYTE[dwChunkSize];
-	ReadChunkData(hFile, pDataBuffer, dwChunkSize, dwChunkPosition);
-
-	// Populate the XAUDIO2_BUFFER structure
-	buffer.AudioBytes = dwChunkSize;  //size of the audio buffer in bytes
-	buffer.pAudioData = pDataBuffer;  //buffer containing audio data
-	buffer.Flags = XAUDIO2_END_OF_STREAM; // tell the source voice not to expect any data after this buffer
-	buffer.pContext = pDataBuffer; // pAudioData is otherwise unaccounted for outside of this method, hold onto its reference for when the buffer ends
-
 	// Check if there are any inactive voices (has to go after file loading since that takes a while)
 	IXAudio2SourceVoice* chosenVoice = nullptr;
 	for (int idx = 0; idx < MAX_CONCURRENT_SOUNDS; idx++)
@@ -104,20 +57,19 @@ void AudioManager::playSound(const char filePath[MAX_SOUND_PATH_LENGTH])
 	if (nullptr == chosenVoice)
 	{
 		// Don't forget to delete the unused memory :)
-		delete[] pDataBuffer;
-		delete[] filePathWCHAR;
+		//delete[] pDataBuffer;
 
 		// Print corresponding message and return
 		printf("All voices are playing sounds. Skipping audio playback\n");
 		return;
 	}
 
-	// Play the sound effect
-	chosenVoice->SubmitSourceBuffer(&buffer);
-	chosenVoice->Start(0);
+	// Create a new Sound struct
+	Sound* newSound = create_sound(filePath);
 
-	// Delete the reference to the WCHAR string
-	delete[] filePathWCHAR;
+	// Play the sound effect
+	chosenVoice->SubmitSourceBuffer(newSound->GetBuffer());
+	chosenVoice->Start(0);
 }
 
 bool AudioManager::init()
@@ -258,4 +210,51 @@ HRESULT AudioManager::ReadChunkData(HANDLE hFile, void* buffer, DWORD buffersize
 	if (0 == ReadFile(hFile, buffer, buffersize, &dwRead, NULL))
 		hr = HRESULT_FROM_WIN32(GetLastError());
 	return hr;
+}
+
+Sound* AudioManager::create_sound(const char filePath[MAX_SOUND_PATH_LENGTH])
+{
+	// Declare WAVEFORMATEX and XAUDIO2_BUFFER structs
+	WAVEFORMATEXTENSIBLE wfx = { 0 };
+	XAUDIO2_BUFFER buffer = { 0 };
+
+	HANDLE hFile = CreateFileA(
+		filePath,
+		GENERIC_READ,
+		FILE_SHARE_READ,
+		NULL,
+		OPEN_EXISTING,
+		0,
+		NULL);
+
+	DWORD dwChunkSize;
+	DWORD dwChunkPosition;
+
+	//check the file type, should be fourccWAVE or 'XWMA'
+	FindChunk(hFile, fourccRIFF, dwChunkSize, dwChunkPosition);
+	DWORD filetype;
+	ReadChunkData(hFile, &filetype, sizeof(DWORD), dwChunkPosition);
+	if (filetype != fourccWAVE)
+	{
+		std::cout << "File is not fourccWAVE" << std::endl;
+		return nullptr;
+	}
+
+	// Locate the FMT chunk, and copy its contents into a WAVEFORMATEX structure 
+	FindChunk(hFile, fourccFMT, dwChunkSize, dwChunkPosition);
+	ReadChunkData(hFile, &wfx, dwChunkSize, dwChunkPosition);
+
+	// Locate the data chunk, and read its contents into a buffer
+	FindChunk(hFile, fourccDATA, dwChunkSize, dwChunkPosition);
+	BYTE* pDataBuffer = new BYTE[dwChunkSize];
+	ReadChunkData(hFile, pDataBuffer, dwChunkSize, dwChunkPosition);
+
+	// Populate the XAUDIO2_BUFFER structure
+	buffer.AudioBytes = dwChunkSize;  //size of the audio buffer in bytes
+	buffer.pAudioData = pDataBuffer;  //buffer containing audio data
+	buffer.Flags = XAUDIO2_END_OF_STREAM; // tell the source voice not to expect any data after this buffer
+
+	// Create the sound struct and return it
+	Sound* newSound = new Sound(filePath, buffer);
+	return newSound;
 }
