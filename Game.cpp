@@ -72,6 +72,7 @@ void Game::LoadShaders()
 		Graphics::Context, FixPath(L"VertexShader.cso").c_str());
 	pixelShader = std::make_shared<SimplePixelShader>(Graphics::Device,
 		Graphics::Context, FixPath(L"PixelShader.cso").c_str());
+	instancedVertexShader = std::make_shared<SimpleVertexShader>(Graphics::Device, Graphics::Context, FixPath(L"InstancedVertexShader.cso").c_str());
 }
 
 
@@ -94,11 +95,11 @@ void Game::CreateGeometry()
 
 	// Create instance data 
 	std::vector<InstanceData> instanceData;
-	for (int i = 0; i < NUM_INSTANCES; ++i)
+	for (int i = 0; i < NUM_INSTANCES; i++)
 	{
 		InstanceData data;
 		// Set up the world matrix for each instance
-		XMStoreFloat4x4(&data.world, XMMatrixTranslation(i * 2.0f, 0.0f, 0.0f));
+		XMStoreFloat4x4(&data.world, XMMatrixTranslation(i * 4.0f, 0.0f, 0.0f));
 		instanceData.push_back(data);
 	}
 
@@ -253,6 +254,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	for (auto& entity : entities)
 	{
 		entity->DrawInstanced(cameras[activeCamera], NUM_INSTANCES);
+		//entity->Draw(cameras[activeCamera]);
 	}
 
 	//draw ui we have to do this after drawing everything else to ensure sorting

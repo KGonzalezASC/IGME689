@@ -266,13 +266,13 @@ void Mesh::DrawInstanced(int instanceCount)
 	UINT offset = 0;
 	Graphics::Context->IASetVertexBuffers(0, 1, m_vertexBuffer.GetAddressOf(), &stride, &offset);
 
-	// Set the index buffer
-	Graphics::Context->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
-
 	// Set the instance buffer (input slot 1)
 	UINT instanceStride = sizeof(InstanceData);
 	UINT instanceOffset = 0;
 	Graphics::Context->IASetVertexBuffers(1, 1, SharedBuffers::InstanceBuffer.GetAddressOf(), &instanceStride, &instanceOffset);
+
+	// Set the index buffer
+	Graphics::Context->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 
 	// Draw the mesh with instancing
 	Graphics::Context->DrawIndexedInstanced(m_indicesCount, instanceCount, 0, 0, 0);
@@ -308,10 +308,11 @@ void Mesh::initBuffers(Vertex* vertices, size_t numVerts, unsigned int* indices,
 	this->m_indicesCount = (UINT)numIndices;
 
 	D3D11_BUFFER_DESC instanceBufferDesc = {};
-	instanceBufferDesc.Usage = D3D11_USAGE_DYNAMIC; // Writable by CPU
+	instanceBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
 	instanceBufferDesc.ByteWidth = sizeof(InstanceData) * MAX_INSTANCES;
-	instanceBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	instanceBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;  // Not a constant buffer
 	instanceBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	instanceBufferDesc.MiscFlags = 0;
+	Graphics::Device->CreateBuffer(&instanceBufferDesc, nullptr, &SharedBuffers::InstanceBuffer);
 
-	HRESULT hr = Graphics::Device->CreateBuffer(&instanceBufferDesc, nullptr, SharedBuffers::InstanceBuffer.GetAddressOf());
 }
