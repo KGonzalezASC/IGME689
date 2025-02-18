@@ -11,7 +11,7 @@
 class Material
 {
 public:
-	Material(const char* name, std::shared_ptr<SimplePixelShader> ps, std::shared_ptr<SimpleVertexShader> vs, DirectX::XMFLOAT3 tint);
+	Material(const char* name, std::shared_ptr<SimplePixelShader> ps, std::shared_ptr<SimpleVertexShader> vs, DirectX::XMFLOAT3 tint, float rough);
 	~Material();
 
 
@@ -31,6 +31,7 @@ public:
 	void SetPixelShader(std::shared_ptr<SimplePixelShader>);
 	void SetVertexShader(std::shared_ptr<SimpleVertexShader>);
 	void SetColorTint(DirectX::XMFLOAT3 color);
+	void SetRoughness(float rough);
 
 	void PrepareMaterial(std::shared_ptr<Transform> transform, std::shared_ptr<Camera> camera);
 
@@ -46,6 +47,8 @@ private:
 	DirectX::XMFLOAT3 colorTint;
 	std::shared_ptr<SimpleVertexShader> vertexShader;
 	std::shared_ptr<SimplePixelShader> pixelShader;
+
+	float roughness;
 
 	const char* name;
 	bool firstPass = true; //needed for first pass of the shader so that if something is not dirty we can still see it

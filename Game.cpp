@@ -29,10 +29,6 @@ void Game::Initialize()
 
 
 
-	//TODO: REPLACE WITH PBR MATERIALS (i.e remove the tint and or make accomodations for both in PS)
-	std::shared_ptr<Material> redMaterial = std::make_shared<Material>("Red Solid", pixelShader, vertexShader, XMFLOAT3(1.0f, 0.0f, 0.0f));
-	materials.insert(materials.end(), { redMaterial});
-
 
 	CreateGeometry(); //updating for A03
 	// Set initial graphics API state pipeline settings
@@ -86,7 +82,7 @@ void Game::CreateGeometry()
 	meshes.push_back(cube);
 
 	// Create a material for the mesh
-	std::shared_ptr<Material> redMaterial = std::make_shared<Material>("Red Solid", pixelShader, vertexShader, XMFLOAT3(1.0f, 0.0f, 0.0f));
+	std::shared_ptr<Material> redMaterial = std::make_shared<Material>("Red Solid", pixelShader, vertexShader, XMFLOAT3(1.0f, 0.0f, 0.0f), 0.5);
 	materials.push_back(redMaterial);
 
 	// Create a single GameObject for the mesh
@@ -105,6 +101,43 @@ void Game::CreateGeometry()
 
 	// Update the instance buffer with the instance data
 	Graphics::UpdateInstanceBuffer(instanceData);
+
+	//lighting
+	Light pointLight1 = {};
+	pointLight1.Color = XMFLOAT3(1, 1, 1);
+	pointLight1.Type = LIGHT_TYPE_POINT;
+	pointLight1.Intensity = 1.0f;
+	pointLight1.Position = XMFLOAT3(-1.5f, 0, 0);
+	pointLight1.Range = 10.0f;
+
+	Light pointLight2 = {};
+	pointLight2.Color = XMFLOAT3(1, 1, 1);
+	pointLight2.Type = LIGHT_TYPE_POINT;
+	pointLight2.Intensity = 0.5f;
+	pointLight2.Position = XMFLOAT3(1.5f, 0, 0);
+	pointLight2.Range = 10.0f;
+
+	Light spotLight1 = {};
+	spotLight1.Color = XMFLOAT3(1, 1, 1);
+	spotLight1.Type = LIGHT_TYPE_SPOT;
+	spotLight1.Intensity = 2.0f;
+	spotLight1.Position = XMFLOAT3(6.0f, 1.5f, 0);
+	spotLight1.Direction = XMFLOAT3(0, -1, 0);
+	spotLight1.Range = 10.0f;
+	spotLight1.SpotOuterAngle = XMConvertToRadians(30.0f);
+	spotLight1.SpotInnerAngle = XMConvertToRadians(20.0f);
+
+	lights.push_back(pointLight1);
+	lights.push_back(pointLight2);
+	lights.push_back(spotLight1);
+
+	//normalize directions of all non-point lights
+	for (int i = 0; i < lights.size(); i++)
+		if (lights[i].Type != LIGHT_TYPE_POINT)
+			XMStoreFloat3(
+				&lights[i].Direction,
+				XMVector3Normalize(XMLoadFloat3(&lights[i].Direction))
+			);
 }
 
 
@@ -253,8 +286,11 @@ void Game::Draw(float deltaTime, float totalTime)
 	// Draw each GameObject with instancing
 	for (auto& entity : entities)
 	{
-		entity->DrawInstanced(cameras[activeCamera], NUM_INSTANCES);
-		//entity->Draw(cameras[activeCamera]);
+		std::shared_ptr<SimplePixelShader> pixelShader = entity->GetMaterial()->GetPixelShader();
+		pixelShader->SetFloat3("ambientColor", ambientColor);
+		pixelShader->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
+		//entity->DrawInstanced(cameras[activeCamera], NUM_INSTANCES);
+		entity->Draw(cameras[activeCamera]);
 	}
 
 	//draw ui we have to do this after drawing everything else to ensure sorting

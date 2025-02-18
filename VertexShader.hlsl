@@ -12,7 +12,7 @@ cbuffer PerFrameData : register(b0)
 cbuffer PerObjectData : register(b1)
 {
     matrix world;
-    //matrix worldInvTrans;
+    matrix worldInvTrans;
 }
 
 /*
@@ -40,7 +40,7 @@ VertexToPixel main(VertexShaderInput input)
     output.screenPosition = mul(wvp, float4(input.localPosition, 1.0f));
     output.uv = input.uv;
     //once lights	output.normal = normalize(mul((float3x3)worldInvTrans, input.normal));
-    output.normal = input.normal;
+    output.normal = normalize(mul((float3x3) worldInvTrans, input.normal));
     output.worldPos = mul(world, float4(input.localPosition, 1.0f)).xyz;
     return output;
 }
