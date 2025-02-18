@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 #include <iostream>
+#include <string>
 #include "Input.h"
 
 #ifdef _XBOX //Big-Endian
@@ -43,27 +44,36 @@ constexpr DWORD AUDIOBUFFERSIZEINSAMPLES = SAMPLESPERCYCLE * AUDIOBUFFERSIZEINCY
 constexpr UINT32 AUDIOBUFFERSIZEINBYTES = AUDIOBUFFERSIZEINSAMPLES * BITSPERSSAMPLE / 8; // 4,000 bytes per buffer.
 
 // Other sound-related constants
-constexpr WORD MAX_CONCURRENT_SOUNDS = 32;												 // 16 sounds can play at once.
+constexpr WORD MAX_CONCURRENT_SOUNDS = 16;												 // 16 sounds can play at once.
 static constexpr int SOUNDS_BUFFER_SIZE = 1024000000;                                    // 128 MB sound buffer size. This is needed because sounds (music especially) can have very large file sizes.
 constexpr WORD MAX_SOUND_PATH_LENGTH = 256;												 // Maximum sound path size of 256 characters.
 
 // Sound struct
-//struct Sound
-//{
-//private:
-//	WCHAR fileName[MAX_SOUND_PATH_LENGTH];
-//	UINT32 size;
-//
-//public:
-//	WCHAR* GetFileName()
-//	{
-//		return fileName;
-//	}
-//	//Sound(char fileName[MAX_SOUND_PATH_LENGTH])
-//	//{
-//	//
-//	//}
-//};
+struct Sound
+{
+private:
+	std::string fileName;
+	XAUDIO2_BUFFER* buffer;
+
+public:
+	std::string GetFileName()
+	{
+		return fileName;
+	}
+	XAUDIO2_BUFFER* GetBuffer()
+	{
+		return buffer;
+	}
+	Sound(std::string fileName, XAUDIO2_BUFFER* buffer)
+	{
+		this->fileName = fileName;
+		this->buffer = buffer;
+	}
+	~Sound()
+	{
+		delete buffer;
+	}
+};
 
 // XAudioVoice struct
 struct XAudioVoice : IXAudio2VoiceCallback
