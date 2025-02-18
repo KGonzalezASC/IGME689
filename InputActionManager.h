@@ -8,6 +8,7 @@
 #include <memory>
 #include <utility>
 #include "InputManager.h"
+#include "InputValue.h"
 
 namespace InputActionManager
 {
@@ -117,6 +118,9 @@ namespace InputActionManager
 
 		XControllerLeftStick = 93,
 		XControllerRightStick = 94,
+
+		XControllerLeftTrigger = 95,
+		XControllerRightTrigger = 96,
 	};
 
 	enum InputBindingType
@@ -132,6 +136,7 @@ namespace InputActionManager
 		Down,
 		Pressed,
 		Released,
+		Value
 	};
 
 	struct InputData
@@ -148,6 +153,7 @@ namespace InputActionManager
 	{
 		wchar_t* name;
 		std::vector<ActionEvent> OnTrigger;
+		InputValue value = InputValue(nullptr);
 
 		InputAction(const wchar_t* name)
 		{
@@ -165,6 +171,7 @@ namespace InputActionManager
 		{
 			name = other.name;
 			other.name = nullptr;
+			value = std::move(other.value);
 		}
 
 		bool operator==(const InputAction& other) const

@@ -127,6 +127,11 @@ namespace InputActionManager
 		addController(XControllerRightThumb, 0x0080);
 		addController(XControllerLeftShoulder, 0x0100);
 		addController(XControllerRightShoulder, 0x0200);
+
+		addController(XControllerLeftStick, 0);
+		addController(XControllerRightStick, 0);
+		addController(XControllerLeftTrigger, 0);
+		addController(XControllerRightTrigger, 0);
 	}
 
 
@@ -160,6 +165,7 @@ namespace InputActionManager
 			InputBindings input = binding.first;
 			InputBindingType type = bindings[input].first;
 			InputType inputType = InputType::Up;
+			std::any inputValue = std::any();
 
 			if (type == InputBindingType::Keyboard)
 			{
@@ -175,6 +181,13 @@ namespace InputActionManager
 				{
 					inputType = XInputManager::Instance->CheckButtonState(
 						bindings[input].second, 0); 
+				}
+				else if (input >= 93 && input <= 96)
+				{
+					inputValue = XInputManager::Instance->GetValueFromController(
+						input, 0);
+
+					inputType = InputType::Value;
 				}
 			}
 

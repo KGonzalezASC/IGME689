@@ -195,6 +195,7 @@
     <ClInclude Include="Input.h" />
     <ClInclude Include="InputActionManager.h" />
     <ClInclude Include="InputManager.h" />
+    <ClInclude Include="InputValue.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="PathHelpers.h" />

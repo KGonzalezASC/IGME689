@@ -1,5 +1,6 @@
 #include "XInputManager.h"
 #include <iostream>
+#include <tuple>
 
 XInputManager * XInputManager::Instance = nullptr;
 
@@ -23,23 +24,25 @@ void XInputManager::UpdateControllerStates()
     // Iterate over all of the controllers (There can be max, up to 4
     for (int i = 0; i < XUSER_MAX_COUNT; i++)
     {
-        // Get the current state of the controller
-        XINPUT_STATE conState = controllerStates[i];
-
         // Set the previous state of the controller buttons
         // to the current state of the buttons
-        prevConButtonStates[i] = conState.Gamepad.wButtons;
+        prevConButtonStates[i] = controllerStates[i].Gamepad.wButtons;
+
+        if (i == 0)
+        //std::cout << "Prev: " << ((prevConButtonStates[i] & XINPUT_GAMEPAD_A) != 0);
 
         // Clear the memeory of the current state of the conState
-        ZeroMemory(&conState, sizeof(XINPUT_STATE));
+        ZeroMemory(&controllerStates[i], sizeof(XINPUT_STATE));
 
         // Attempt to retrieve data from the controller
-        DWORD result = XInputGetState(i, &conState);
+        DWORD result = XInputGetState(i, &controllerStates[i]);
 
         // Depending on the result, process accordingly
         if (result == ERROR_SUCCESS)
         {
-            WORD wButtons = conState.Gamepad.wButtons;
+            WORD wButtons = controllerStates[i].Gamepad.wButtons;
+
+            //std::cout << "Now: " << ((wButtons & 0x1000) != 0) << std::endl;
 
             bool aButton = (wButtons & XINPUT_GAMEPAD_A) != 0;
             bool bButton = (wButtons & XINPUT_GAMEPAD_B) != 0;
@@ -52,20 +55,13 @@ void XInputManager::UpdateControllerStates()
         }
         else
         {
-            // If it didn't succeed, make sure that XInput_State
-            // is set to a null_ptr
-            conState = {};
+
         }
     }
 }
 
 InputType XInputManager::CheckButtonState(uint16_t button, int index)
 { 
-    if (controllerStates[index].Gamepad.wButtons != prevConButtonStates[index])
-    {
-
-    }
-
     WORD wButtons = controllerStates[index].Gamepad.wButtons;
     bool isPressed = (wButtons & button) != 0;
 
@@ -74,9 +70,28 @@ InputType XInputManager::CheckButtonState(uint16_t button, int index)
 
     InputType type = CheckButtonState(isPressed, wasPressed);
 
-    std::cout << " State: " << type << std::endl;
-
     return type;
+}
+
+std::any XInputManager::GetValueFromController(InputBindings value, int index)
+{
+
+	// Check the value of the input binding
+    switch (value)
+    {
+        case InputBindings::XControllerLeftTrigger:
+            return controllerStates[index].Gamepad.bLeftTrigger;
+        case InputBindings::XControllerRightTrigger:
+            return controllerStates[index].Gamepad.bRightTrigger;
+        case InputBindings::XControllerLeftStick:
+            return std::make_tuple(
+				controllerStates[index].Gamepad.sThumbLX,
+				controllerStates[index].Gamepad.sThumbLY);
+        case InputBindings::XControllerRightStick:
+			return std::make_tuple(
+                controllerStates[index].Gamepad.sThumbRX,
+                controllerStates[index].Gamepad.sThumbRY);
+    }
 }
 
 InputType XInputManager::CheckButtonState(bool currentInput, bool prevInput)

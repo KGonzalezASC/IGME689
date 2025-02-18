@@ -158,6 +158,9 @@
     <ClInclude Include="XInputManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="InputValue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="PixelShader.hlsl">
