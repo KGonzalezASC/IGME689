@@ -216,6 +216,9 @@ void Game::Update(float deltaTime, float totalTime)
 	cameras[activeCamera]->Update(deltaTime);
 	updateUi(deltaTime);
 	audioManager->update_audio(deltaTime);
+
+	// To play a sound, call audioManager->playSound("filepath"). For example:
+	//audioManager->playSound("Sounds/vine-thud.wav");
 }
 
 
