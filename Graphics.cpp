@@ -1,4 +1,5 @@
 #include "Graphics.h"
+#include "Mesh.h"
 #include <dxgi1_6.h>
 
 // Tell the drivers to use high-performance GPU in multi-GPU systems (like laptops)
@@ -242,6 +243,16 @@ void Graphics::ResizeBuffers(unsigned int width, unsigned int height)
 	SwapChain->GetFullscreenState(&isFullscreen, 0);
 }
 
+void Graphics::UpdateInstanceBuffer(const std::vector<InstanceData>& instances)
+{
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	HRESULT hr = Context->Map(SharedBuffers::InstanceBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	if (SUCCEEDED(hr))
+	{
+		memcpy(mappedResource.pData, instances.data(), sizeof(InstanceData) * instances.size());
+		Context->Unmap(SharedBuffers::InstanceBuffer.Get(), 0);
+	}
+}
 
 // --------------------------------------------------------
 // Prints graphics debug messages waiting in the queue

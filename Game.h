@@ -9,6 +9,7 @@
 #include "Camera.h"
 #include "Material.h"
 #include "SimpleShader/SimpleShader.h"
+#include "Lights.h"
 
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_impl_dx11.h"
@@ -17,6 +18,9 @@
 
 #include "AudioManager.h"
 #include <iostream>
+#include "SharedBuffers.h"
+
+#define NUM_INSTANCES 10
 
 class Game
 {
@@ -49,11 +53,16 @@ private:
 	std::vector<std::shared_ptr<Mesh>> meshes;
 	std::vector<std::shared_ptr<GameObject>> entities;
 	std::vector<std::shared_ptr<Material>> materials;
+	std::vector<Light> lights;
+
+	//lighting
+	DirectX::XMFLOAT3 ambientColor = { 0.1314f, 0.1977f, 0.2768f };
 
 
 	// Shaders and shader-related constructs
 	std::shared_ptr<SimplePixelShader> pixelShader;
 	std::shared_ptr<SimpleVertexShader> vertexShader;
+	std::shared_ptr<SimpleVertexShader> instancedVertexShader;
 	std::shared_ptr<SimplePixelShader> uvPixelShader;
 	std::shared_ptr<SimplePixelShader> normalPixelShader;
 	std::shared_ptr<SimplePixelShader> customPixelShader;
