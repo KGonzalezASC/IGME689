@@ -64,12 +64,6 @@ void Material::PrepareMaterial(std::shared_ptr<Transform> transform, std::shared
     vertexShader->SetShader();
     pixelShader->SetShader();
 
-    // Check if transform is dirty or it's the first frame
-    if (transform->isDirtyWorld() || firstPass)
-    {
-        printf("World matrix is dirty (or first pass)\n");
-    }
-
     vertexShader->SetMatrix4x4("world", transform->getWorldMatrix());
     vertexShader->SetMatrix4x4("worldInvTrans", transform->getWorldInverseTransposeMatrix());
 
@@ -81,8 +75,5 @@ void Material::PrepareMaterial(std::shared_ptr<Transform> transform, std::shared
     // Pixel shader settings
     pixelShader->SetFloat3("colorTint", colorTint);
     pixelShader->CopyAllBufferData();
-
-    // Mark the first pass as done
-    firstPass = false;
 }
 

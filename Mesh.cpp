@@ -1,4 +1,5 @@
 #include "Mesh.h"
+#include "SharedBuffers.h"
 
 using namespace DirectX;
 //implement header / interface
@@ -230,21 +231,6 @@ Mesh::Mesh(const char* name, const std::wstring& objFile) : name(name)
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //dtor
 Mesh::~Mesh(){}
 
@@ -253,10 +239,10 @@ void Mesh::Draw() {
 	//like webgpu buffers are set per frame before drawIndexed
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
-	Graphics::Context->IASetVertexBuffers(0, 1, m_vertexBuffer.GetAddressOf(), &stride, &offset);
-	Graphics::Context->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+	Graphics::Context11_1->IASetVertexBuffers(0, 1, m_vertexBuffer.GetAddressOf(), &stride, &offset);
+	Graphics::Context11_1->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 	//draw
-	Graphics::Context->DrawIndexed(this->m_indicesCount, 0, 0);
+	Graphics::Context11_1->DrawIndexed(this->m_indicesCount, 0, 0);
 }
 
 void Mesh::DrawInstanced(int instanceCount)
@@ -264,18 +250,15 @@ void Mesh::DrawInstanced(int instanceCount)
 	// Set the vertex buffer (input slot 0)
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
-	Graphics::Context->IASetVertexBuffers(0, 1, m_vertexBuffer.GetAddressOf(), &stride, &offset);
-
+	Graphics::Context11_1->IASetVertexBuffers(0, 1, m_vertexBuffer.GetAddressOf(), &stride, &offset);
 	// Set the instance buffer (input slot 1)
 	UINT instanceStride = sizeof(InstanceData);
 	UINT instanceOffset = 0;
-	Graphics::Context->IASetVertexBuffers(1, 1, SharedBuffers::InstanceBuffer.GetAddressOf(), &instanceStride, &instanceOffset);
-
+	Graphics::Context11_1->IASetVertexBuffers(1, 1, SharedBuffers::InstanceBuffer.GetAddressOf(), &instanceStride, &instanceOffset);
 	// Set the index buffer
-	Graphics::Context->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
-
+	Graphics::Context11_1->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 	// Draw the mesh with instancing
-	Graphics::Context->DrawIndexedInstanced(m_indicesCount, instanceCount, 0, 0, 0);
+	Graphics::Context11_1->DrawIndexedInstanced(m_indicesCount, instanceCount, 0, 0, 0);
 }
 
 void Mesh::initBuffers(Vertex* vertices, size_t numVerts, unsigned int* indices, size_t numIndices)

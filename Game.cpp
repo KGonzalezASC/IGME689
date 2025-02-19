@@ -24,7 +24,7 @@ void Game::Initialize()
 	ImGui::CreateContext();
 	ImGui::StyleColorsDark();
 	ImGui_ImplWin32_Init(Window::Handle());
-	ImGui_ImplDX11_Init(Graphics::Device.Get(), Graphics::Context.Get());
+	ImGui_ImplDX11_Init(Graphics::Device.Get(), Graphics::Context11_1.Get());
 	LoadShaders();
 
 
@@ -33,7 +33,7 @@ void Game::Initialize()
 	CreateGeometry(); //updating for A03
 	// Set initial graphics API state pipeline settings
 	{
-		Graphics::Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		Graphics::Context11_1->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	}
 
 	//camera basic setup //TODO: CAMERA NEEDS IMPROVED CONTROLS and bug fix so we can set proper looking at position instead of directly at mouse pos.
@@ -65,10 +65,10 @@ Game::~Game()
 void Game::LoadShaders()
 {
 	vertexShader = std::make_shared<SimpleVertexShader>(Graphics::Device,
-		Graphics::Context, FixPath(L"VertexShader.cso").c_str());
+		Graphics::Context11_1, FixPath(L"VertexShader.cso").c_str());
 	pixelShader = std::make_shared<SimplePixelShader>(Graphics::Device,
-		Graphics::Context, FixPath(L"PixelShader.cso").c_str());
-	instancedVertexShader = std::make_shared<SimpleVertexShader>(Graphics::Device, Graphics::Context, FixPath(L"InstancedVertexShader.cso").c_str());
+		Graphics::Context11_1, FixPath(L"PixelShader.cso").c_str());
+	instancedVertexShader = std::make_shared<SimpleVertexShader>(Graphics::Device, Graphics::Context11_1, FixPath(L"InstancedVertexShader.cso").c_str());
 }
 
 
@@ -275,8 +275,8 @@ void Game::Draw(float deltaTime, float totalTime)
 	// - At the beginning of Game::Draw() before drawing *anything*
 	{
 		// Clear the back buffer (erase what's on screen) and depth buffer
-		Graphics::Context->ClearRenderTargetView(Graphics::BackBufferRTV.Get(),	bgColor);
-		Graphics::Context->ClearDepthStencilView(Graphics::DepthBufferDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+		Graphics::Context11_1->ClearRenderTargetView(Graphics::BackBufferRTV.Get(),	bgColor);
+		Graphics::Context11_1->ClearDepthStencilView(Graphics::DepthBufferDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 	}
 
 	//post processing goes here
@@ -313,7 +313,7 @@ void Game::Draw(float deltaTime, float totalTime)
 			vsync ? 0 : DXGI_PRESENT_ALLOW_TEARING);
 
 		// Re-bind back buffer and depth buffer after presenting
-		Graphics::Context->OMSetRenderTargets(
+		Graphics::Context11_1->OMSetRenderTargets(
 			1,
 			Graphics::BackBufferRTV.GetAddressOf(),
 			Graphics::DepthBufferDSV.Get());

@@ -194,6 +194,7 @@
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="PathHelpers.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="SharedBuffers.h" />
     <ClInclude Include="SimpleShader\SimpleShader.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="Vertex.h" />

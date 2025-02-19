@@ -6,14 +6,13 @@
 #include <wrl/client.h>
 #include <memory>
 #include "SimpleShader/SimpleShader.h"
-#include <d3d11.h>
+#include <d3d11_1.h>
 
 class Material
 {
 public:
 	Material(const char* name, std::shared_ptr<SimplePixelShader> ps, std::shared_ptr<SimpleVertexShader> vs, DirectX::XMFLOAT3 tint, float rough);
 	~Material();
-
 
 	//gets and setters
 	//Although multiple materials may use the same vertex and pixel shader code(i.e., the same compiled shader files),
@@ -49,9 +48,7 @@ private:
 	std::shared_ptr<SimplePixelShader> pixelShader;
 
 	float roughness;
-
 	const char* name;
-	bool firstPass = true; //needed for first pass of the shader so that if something is not dirty we can still see it
 };
 
 
