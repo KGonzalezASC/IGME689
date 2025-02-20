@@ -9,11 +9,15 @@
 #include <assimp/scene.h>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
-
+#include <unordered_map>
 
 #include "Graphics.h"
 
 
+struct BoneInfo {
+    DirectX::XMMATRIX BoneOffset;  // Offset from mesh space to bone space
+    DirectX::XMMATRIX FinalTransformation;
+};
 
 
 class Mesh
@@ -27,6 +31,18 @@ class Mesh
 
     void initBuffers(Vertex* vertices, size_t numVerts, unsigned int* indexArray, size_t numIndices);
     void LoadFBX(const std::wstring& filePath);
+
+
+    //animation fields
+    std::unordered_map<std::string, unsigned int> mBoneMapping; // Bone name to index
+    std::vector<BoneInfo> mBoneInfo;
+    unsigned int mNumBones = 0;
+
+    std::vector<DirectX::XMFLOAT4X4> mFinalBoneTransforms;
+
+    void LoadFBX(const std::wstring& filePath);
+    void ProcessBoneHierarchy(aiNode* node, DirectX::XMMATRIX parentTransform);
+    void ExtractBoneWeightsForVertices(aiMesh* mesh);
 
     //copy ctor
 	//Mesh(const Mesh& mesh);
@@ -50,6 +66,9 @@ class Mesh
     unsigned int GetIndexCount() { return m_indicesCount; }
     unsigned int GetVertexCount() { return m_vertexCount; }
 	const char* GetName() { return name; }
+
+    //animation method
+    const std::vector<DirectX::XMFLOAT4X4>& GetFinalBoneTransforms() const { return mFinalBoneTransforms; }
 
     void Draw();
 };

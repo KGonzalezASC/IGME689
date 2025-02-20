@@ -21,14 +21,14 @@ Mesh::Mesh(const char* name, const std::wstring& inputFile, bool isFBX) : name(n
 	{
 		// Existing OBJ loading code
 		// Author: Chris Cascioli
-// Purpose: Basic .OBJ 3D model loading, supporting positions, uvs and normals
-// 
-// - You are allowed to directly copy/paste this into your code base
-//   for assignments, given that you clearly cite that this is not
-//   code of your own design.
+		// Purpose: Basic .OBJ 3D model loading, supporting positions, uvs and normals
+		// 
+		// - You are allowed to directly copy/paste this into your code base
+		//   for assignments, given that you clearly cite that this is not
+		//   code of your own design.
 
 
-// File input object
+		// File input object
 		this->m_indicesCount = 0;
 		this->m_vertexCount = 0;
 		std::ifstream obj(inputFile);
@@ -257,8 +257,14 @@ void Mesh::LoadFBX(const std::wstring& filePath)
 	// Process the scene to extract mesh and animation data
 	// This is a simplified example, you need to handle bones, weights, and animations properly
 
-	std::vector<Vertex> vertices;
-	std::vector<unsigned int> indices;
+	
+
+	// Variables used while reading the file
+	std::vector<XMFLOAT3> positions;	// Positions from the file
+	std::vector<XMFLOAT3> normals;		// Normals from the file
+	std::vector<XMFLOAT2> uvs;		// UVs from the file
+	std::vector<Vertex> verts;		// Verts we're assembling
+	std::vector<UINT> indices;		// Indices of these verts
 
 	for (unsigned int i = 0; i < scene->mNumMeshes; i++)
 	{
@@ -271,9 +277,9 @@ void Mesh::LoadFBX(const std::wstring& filePath)
 			vertex.UV = XMFLOAT2(mesh->mTextureCoords[0][j].x, mesh->mTextureCoords[0][j].y);
 			vertex.Normal = XMFLOAT3(mesh->mNormals[j].x, mesh->mNormals[j].y, mesh->mNormals[j].z);
 			// Initialize bone weights and indices to zero
-			vertex.BoneWeights = XMFLOAT4(0, 0, 0, 0);
-			vertex.BoneIndices = XMUINT4(0, 0, 0, 0);
-			vertices.push_back(vertex);
+			//vertex.BoneWeights = XMFLOAT4(0, 0, 0, 0);
+			//vertex.BoneIndices = XMUINT4(0, 0, 0, 0);
+			verts.push_back(vertex);
 		}
 
 		for (unsigned int j = 0; j < mesh->mNumFaces; j++)
@@ -286,6 +292,40 @@ void Mesh::LoadFBX(const std::wstring& filePath)
 		}
 	}
 
+	aiMesh* mesh = scene->mMeshes[0]; // Assuming a single mesh
+	ExtractBoneWeightsForVertices(mesh);
+
+	// Process animation data
+	if (scene->mNumAnimations > 0)
+	{
+		aiAnimation* animation = scene->mAnimations[0]; // Assuming one animation for now
+
+		for (unsigned int i = 0; i < animation->mNumChannels; i++)
+		{
+			aiNodeAnim* nodeAnim = animation->mChannels[i];
+			std::string nodeName = nodeAnim->mNodeName.C_Str();
+
+			if (mBoneMapping.find(nodeName) == mBoneMapping.end())
+				continue;
+
+			unsigned int boneIndex = mBoneMapping[nodeName];
+			BoneInfo& boneInfo = mBoneInfo[boneIndex];
+
+			// Store keyframe transformations
+			for (unsigned int j = 0; j < nodeAnim->mNumPositionKeys; j++)
+			{
+				aiVector3D position = nodeAnim->mPositionKeys[j].mValue;
+				aiQuaternion rotation = nodeAnim->mRotationKeys[j].mValue;
+				aiVector3D scale = nodeAnim->mScalingKeys[j].mValue;
+
+				DirectX::XMMATRIX translationM = DirectX::XMMatrixTranslation(position.x, position.y, position.z);
+				DirectX::XMMATRIX rotationM = DirectX::XMMatrixRotationQuaternion(DirectX::XMVectorSet(rotation.x, rotation.y, rotation.z, rotation.w));
+				DirectX::XMMATRIX scaleM = DirectX::XMMatrixScaling(scale.x, scale.y, scale.z);
+
+				boneInfo.FinalTransformation = scaleM * rotationM * translationM;
+			}
+		}
+	}
 	initBuffers(vertices.data(), vertices.size(), indices.data(), indices.size());
 }
 
@@ -344,4 +384,54 @@ void Mesh::initBuffers(Vertex* vertices, size_t numVerts, unsigned int* indices,
 	initialIndexData.pSysMem = indices;
 	Graphics::Device->CreateBuffer(&ibd, &initialIndexData, m_indexBuffer.GetAddressOf());
 	this->m_indicesCount = (UINT)numIndices;
+}
+
+void Mesh::ExtractBoneWeightsForVertices(aiMesh* mesh)
+{
+	for (unsigned int i = 0; i < mesh->mNumBones; i++)
+	{
+		aiBone* bone = mesh->mBones[i];
+		std::string boneName = bone->mName.C_Str();
+
+		unsigned int boneIndex = 0;
+		if (mBoneMapping.find(boneName) == mBoneMapping.end())
+		{
+			boneIndex = mNumBones;
+			mNumBones++;
+			BoneInfo boneInfo;
+			mBoneInfo.push_back(boneInfo);
+		}
+		else
+		{
+			boneIndex = mBoneMapping[boneName];
+		}
+
+		// Store bone offset matrix
+		aiMatrix4x4 offsetMatrix = bone->mOffsetMatrix;
+		mBoneInfo[boneIndex].BoneOffset = DirectX::XMMATRIX(
+			offsetMatrix.a1, offsetMatrix.a2, offsetMatrix.a3, offsetMatrix.a4,
+			offsetMatrix.b1, offsetMatrix.b2, offsetMatrix.b3, offsetMatrix.b4,
+			offsetMatrix.c1, offsetMatrix.c2, offsetMatrix.c3, offsetMatrix.c4,
+			offsetMatrix.d1, offsetMatrix.d2, offsetMatrix.d3, offsetMatrix.d4
+		);
+
+		// Store vertex weights
+		for (unsigned int j = 0; j < bone->mNumWeights; j++)
+		{
+			unsigned int vertexID = bone->mWeights[j].mVertexId;
+			float weight = bone->mWeights[j].mWeight;
+
+			// Assign to the vertex
+			// Assuming a max of 4 bone influences per vertex
+			for (int k = 0; k < 4; k++)
+			{
+				if (mesh->mVertices[vertexID].BoneWeights[k] == 0.0f)
+				{
+					mVertices[vertexID].BoneIndices[k] = boneIndex;
+					mVertices[vertexID].BoneWeights[k] = weight;
+					break;
+				}
+			}
+		}
+	}
 }
