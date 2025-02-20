@@ -85,6 +85,7 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="XInputManager.cpp">
+    <ClCompile Include="SharedBuffers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -159,11 +160,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="InputValue.h">
+    <ClInclude Include="Lights.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SharedBuffers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="PixelShader.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="InstancedVertexShader.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="VertexShader.hlsl">
@@ -172,6 +180,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ShaderStructs.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Lighting.hlsli">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <d3d11.h>
+#include <d3d11_1.h>
 #include <DirectXMath.h>
 #include <wrl/client.h> //comptr
 #include <fstream>
@@ -9,9 +9,6 @@
 
 #include "Graphics.h"
 #include "Vertex.h"
-
-
-
 
 class Mesh
 {
@@ -46,6 +43,7 @@ class Mesh
 	const char* GetName() { return name; }
 
     void Draw();
+    void DrawInstanced(int instanceCount);
 };
 
 

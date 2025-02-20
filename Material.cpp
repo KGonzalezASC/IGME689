@@ -1,10 +1,11 @@
 #include "Material.h"
 //ctor
-Material::Material(const char* name, std::shared_ptr<SimplePixelShader> ps, std::shared_ptr<SimpleVertexShader> vs, DirectX::XMFLOAT3 tint) :
+Material::Material(const char* name, std::shared_ptr<SimplePixelShader> ps, std::shared_ptr<SimpleVertexShader> vs, DirectX::XMFLOAT3 tint, float rough) :
 	name(name),
 	pixelShader(ps),
 	vertexShader(vs),
-	colorTint(tint)
+	colorTint(tint),
+    roughness(rough)
 {
 
 }
@@ -50,6 +51,11 @@ void Material::SetColorTint(DirectX::XMFLOAT3 color)
 	colorTint = color;
 }
 
+void Material::SetRoughness(float rough)
+{
+    roughness = rough;
+}
+
 
 //LIKELY THIS AND SIMPLE SHADER NEEDS A REWRITE
 void Material::PrepareMaterial(std::shared_ptr<Transform> transform, std::shared_ptr<Camera> camera)
@@ -58,12 +64,8 @@ void Material::PrepareMaterial(std::shared_ptr<Transform> transform, std::shared
     vertexShader->SetShader();
     pixelShader->SetShader();
 
-    // Check if transform is dirty or it's the first frame
-    if (transform->isDirtyWorld() || firstPass)
-    {
-        vertexShader->SetMatrix4x4("world", transform->getWorldMatrix());
-        printf("World matrix is dirty (or first pass)\n");
-    }
+    vertexShader->SetMatrix4x4("world", transform->getWorldMatrix());
+    vertexShader->SetMatrix4x4("worldInvTrans", transform->getWorldInverseTransposeMatrix());
 
     // View and projection matrices are likely per-frame and always need to be set
     vertexShader->SetMatrix4x4("view", camera->getViewMatrix());
@@ -73,8 +75,5 @@ void Material::PrepareMaterial(std::shared_ptr<Transform> transform, std::shared
     // Pixel shader settings
     pixelShader->SetFloat3("colorTint", colorTint);
     pixelShader->CopyAllBufferData();
-
-    // Mark the first pass as done
-    firstPass = false;
 }
 
