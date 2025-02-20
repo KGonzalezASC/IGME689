@@ -43,18 +43,37 @@ void InputManager::Initialize(HWND windowHandle)
 	InputActionManager::Initialize();
 	XInputManager::Initialize();
 
-	InputActionManager::CreateAction(L"Test");
+	InputActionManager::CreateAction(L"Value");
 
-	InputActionManager::AssignBindingToAction(L"Test", InputBindings::XControllerLeftTrigger);
+	InputActionManager::AssignBindingToAction(L"Value", InputBindings::XControllerLeftTrigger);
+	InputActionManager::AssignBindingToAction(L"Value", InputBindings::XControllerRightTrigger);
 	//InputActionManager::AssignBindingToAction(L"Test", InputBindings::XControllerDPadUp);
 
-	InputActionManager::GetAction(L"Test").OnTrigger.push_back([](InputActionManager::InputData data) 
-		{ 
-			if (data.inputType == InputActionManager::InputType::Value)
+	InputActionManager::GetAction(L"Value").OnTrigger.push_back([](InputActionManager::InputData data) 
+	{ 
+		if (data.inputType == InputActionManager::InputType::Value)
+		{
+			if ((int)data.value.GetValue<BYTE>().value() != 0)
 			{
+				std::cout << "Value Pressed: " << data.key << std::endl;
 				std::cout << (int)data.value.GetValue<BYTE>().value() << std::endl;
 			}
-		});
+		}
+	});
+
+	InputActionManager::CreateAction(L"ButtonTest");
+
+	InputActionManager::AssignBindingToAction(L"ButtonTest", InputBindings::XControllerA);
+	InputActionManager::AssignBindingToAction(L"ButtonTest", InputBindings::Key2);
+	InputActionManager::AssignBindingToAction(L"ButtonTest", InputBindings::KeyO);
+
+	InputActionManager::GetAction(L"ButtonTest").OnTrigger.push_back([](InputActionManager::InputData data)
+	{
+		if (data.inputType == InputActionManager::InputType::Pressed)
+		{
+			std::cout << "Key Pressed: " << data.key << std::endl;
+		}
+	});
 }
 
 // ---------------------------------------------------
