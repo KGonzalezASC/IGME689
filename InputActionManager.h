@@ -144,6 +144,7 @@ namespace InputActionManager
 		InputType inputType;
 		InputBindings key;
 		uint16_t controllerIndex;
+		InputValue value = InputValue(nullptr);
 	};
 
 	typedef std::function<void(InputData)> ActionEvent;
@@ -153,7 +154,6 @@ namespace InputActionManager
 	{
 		wchar_t* name;
 		std::vector<ActionEvent> OnTrigger;
-		InputValue value = InputValue(nullptr);
 
 		InputAction(const wchar_t* name)
 		{
@@ -171,7 +171,7 @@ namespace InputActionManager
 		{
 			name = other.name;
 			other.name = nullptr;
-			value = std::move(other.value);
+			
 		}
 
 		bool operator==(const InputAction& other) const

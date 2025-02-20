@@ -45,13 +45,15 @@ void InputManager::Initialize(HWND windowHandle)
 
 	InputActionManager::CreateAction(L"Test");
 
-	InputActionManager::AssignBindingToAction(L"Test", InputBindings::XControllerA);
+	InputActionManager::AssignBindingToAction(L"Test", InputBindings::XControllerLeftTrigger);
 	//InputActionManager::AssignBindingToAction(L"Test", InputBindings::XControllerDPadUp);
 
 	InputActionManager::GetAction(L"Test").OnTrigger.push_back([](InputActionManager::InputData data) 
 		{ 
-			if (data.inputType == InputActionManager::InputType::Pressed)
-				std::cout << data.key << " was " << data.inputType << std::endl; 
+			if (data.inputType == InputActionManager::InputType::Value)
+			{
+				std::cout << (int)data.value.GetValue<BYTE>().value() << std::endl;
+			}
 		});
 }
 

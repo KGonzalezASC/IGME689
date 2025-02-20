@@ -195,6 +195,7 @@ namespace InputActionManager
 			data.inputType = inputType;
 			data.key = input;
 			data.controllerIndex = -1;
+			data.value = InputValue(inputValue);
 
 			// Loop through all the actions associated with this binding
 			for (auto& actionName : binding.second)
