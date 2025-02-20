@@ -27,14 +27,14 @@ namespace Graphics
 
 // Getters
 bool Graphics::VsyncState() { return vsyncDesired || !supportsTearing || isFullscreen; }
-std::wstring Graphics::APIName() 
-{ 
+std::wstring Graphics::APIName()
+{
 	switch (featureLevel)
 	{
-	case D3D_FEATURE_LEVEL_10_0: return L"D3D10";
-	case D3D_FEATURE_LEVEL_10_1: return L"D3D10.1";
-	case D3D_FEATURE_LEVEL_11_0: return L"D3D11";
 	case D3D_FEATURE_LEVEL_11_1: return L"D3D11.1";
+	case D3D_FEATURE_LEVEL_11_0: return L"D3D11";
+	case D3D_FEATURE_LEVEL_10_1: return L"D3D10.1";
+	case D3D_FEATURE_LEVEL_10_0: return L"D3D10";
 	default: return L"Unknown";
 	}
 }
@@ -53,23 +53,19 @@ HRESULT Graphics::Initialize(unsigned int windowWidth, unsigned int windowHeight
 	if (apiInitialized)
 		return E_FAIL;
 
-	// Save desired vsync state, though it may be stuck "on" if
-	// the device doesn't support screen tearing
+	// Save desired vsync state
 	vsyncDesired = vsyncIfPossible;
 
 	// Determine if screen tearing ("vsync off") is available
-	// - This is necessary due to variable refresh rate displays
 	Microsoft::WRL::ComPtr<IDXGIFactory5> factory;
-	if (SUCCEEDED(CreateDXGIFactory1(IID_PPV_ARGS(&factory))))
+	if (SUCCEEDED(CreateDXGIFactory1(IID_PPV_ARGS(&factory))) && factory)
 	{
-		// Check for this specific feature (must use BOOL typedef here!)
 		BOOL tearingSupported = false;
 		HRESULT featureCheck = factory->CheckFeatureSupport(
 			DXGI_FEATURE_PRESENT_ALLOW_TEARING,
 			&tearingSupported,
 			sizeof(tearingSupported));
 
-		// Final determination of support
 		supportsTearing = SUCCEEDED(featureCheck) && tearingSupported;
 	}
 
@@ -77,63 +73,84 @@ HRESULT Graphics::Initialize(unsigned int windowWidth, unsigned int windowHeight
 	unsigned int deviceFlags = 0;
 
 #if defined(DEBUG) || defined(_DEBUG)
-	// If we're in debug mode in visual studio, we also
-	// want to make a "Debug DirectX Device" to see some
-	// errors and warnings in Visual Studio's output window
-	// when things go wrong!
 	deviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
-	// Create a description of how our swap
-	// chain should work
+	// Create a description of how our swap chain should work
 	DXGI_SWAP_CHAIN_DESC swapDesc = {};
-	swapDesc.BufferCount		= 2;
-	swapDesc.BufferDesc.Width	= windowWidth;
-	swapDesc.BufferDesc.Height	= windowHeight;
+	swapDesc.BufferCount = 2;
+	swapDesc.BufferDesc.Width = windowWidth;
+	swapDesc.BufferDesc.Height = windowHeight;
 	swapDesc.BufferDesc.RefreshRate.Numerator = 60;
 	swapDesc.BufferDesc.RefreshRate.Denominator = 1;
-	swapDesc.BufferDesc.Format	= DXGI_FORMAT_R8G8B8A8_UNORM;
+	swapDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	swapDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 	swapDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-	swapDesc.BufferUsage		= DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	swapDesc.Flags				= supportsTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
-	swapDesc.OutputWindow		= windowHandle;
-	swapDesc.SampleDesc.Count	= 1;
+	swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	swapDesc.Flags = supportsTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+	swapDesc.OutputWindow = windowHandle;
+	swapDesc.SampleDesc.Count = 1;
 	swapDesc.SampleDesc.Quality = 0;
-	swapDesc.SwapEffect			= DXGI_SWAP_EFFECT_FLIP_DISCARD;
-	swapDesc.Windowed			= true;
+	swapDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	swapDesc.Windowed = true;
+
+	// Define the feature levels we want to support
+	D3D_FEATURE_LEVEL featureLevels[] = {
+		D3D_FEATURE_LEVEL_11_1, // DirectX 11.1
+		D3D_FEATURE_LEVEL_11_0, // DirectX 11.0
+		D3D_FEATURE_LEVEL_10_1, // DirectX 10.1
+		D3D_FEATURE_LEVEL_10_0  // DirectX 10.0
+	};
 
 	// Result variable for below function calls
 	HRESULT hr = S_OK;
 
-	// Attempt to initialize DirectX
+	// Create base device and context
+	Microsoft::WRL::ComPtr<ID3D11Device> baseDevice;
+	Microsoft::WRL::ComPtr<ID3D11DeviceContext> baseContext;
+
 	hr = D3D11CreateDeviceAndSwapChain(
-		0,							// Video adapter (physical GPU) to use, or null for default
-		D3D_DRIVER_TYPE_HARDWARE,	// We want to use the hardware (GPU)
-		0,							// Used when doing software rendering
-		deviceFlags,				// Any special options
-		0,							// Optional array of possible verisons we want as fallbacks
-		0,							// The number of fallbacks in the above param
-		D3D11_SDK_VERSION,			// Current version of the SDK
-		&swapDesc,					// Address of swap chain options
-		SwapChain.GetAddressOf(),	// Pointer to our Swap Chain pointer
-		Device.GetAddressOf(),		// Pointer to our Device pointer
-		&featureLevel,				// Retrieve exact API feature level in use
-		Context.GetAddressOf());	// Pointer to our Device Context pointer
+		0,                          // Video adapter (physical GPU) to use, or null for default
+		D3D_DRIVER_TYPE_HARDWARE,   // We want to use the hardware (GPU)
+		0,                          // Used when doing software rendering
+		deviceFlags,                // Any special options
+		featureLevels,              // Array of feature levels to try
+		ARRAYSIZE(featureLevels),   // Number of feature levels in the array
+		D3D11_SDK_VERSION,          // Current version of the SDK
+		&swapDesc,                  // Address of swap chain options
+		SwapChain.GetAddressOf(),   // Pointer to our Swap Chain pointer
+		baseDevice.GetAddressOf(),  // Pointer to our base Device pointer
+		&featureLevel,              // Retrieve exact API feature level in use
+		baseContext.GetAddressOf()  // Pointer to our base Device Context pointer
+	);
+
 	if (FAILED(hr)) return hr;
+
+	// Query for ID3D11Device1
+	hr = baseDevice->QueryInterface(__uuidof(ID3D11Device1), (void**)&Device);
+	if (FAILED(hr))
+	{
+		printf("Failed to query for ID3D11Device1. DirectX 11.1 not supported.\n");
+		return hr;
+	}
+
+	// Query for ID3D11DeviceContext1
+	hr = baseContext->QueryInterface(__uuidof(ID3D11DeviceContext1), (void**)&Context11_1);
+	if (FAILED(hr))
+	{
+		printf("Failed to query for ID3D11DeviceContext1. DirectX 11.1 not supported.\n");
+		return hr;
+	}
+
 
 	// We're set up
 	apiInitialized = true;
 
-	// Call ResizeBuffers(), which will also set up the 
-	// RENDER TARGET view and depth stencil view for the
-	// various buffers we need for rendering. This call 
-	// will also set the appropriate VIEWPORT for our window.
+	// Call ResizeBuffers() to set up the render target and depth stencil views
 	ResizeBuffers(windowWidth, windowHeight);
 
 #if defined(DEBUG) || defined(_DEBUG)
-	// If we're in debug mode, set up the info queue to
-	// get debug messages we can print to our console
+	// Set up the info queue for debug messages
 	Microsoft::WRL::ComPtr<ID3D11Debug> debug;
 	Device->QueryInterface(IID_PPV_ARGS(debug.GetAddressOf()));
 	debug->QueryInterface(IID_PPV_ARGS(InfoQueue.GetAddressOf()));
@@ -177,10 +194,10 @@ void Graphics::ResizeBuffers(unsigned int width, unsigned int height)
 
 	// Resize the swap chain buffers
 	SwapChain->ResizeBuffers(
-		2, 
-		width, 
-		height, 
-		DXGI_FORMAT_R8G8B8A8_UNORM, 
+		2,
+		width,
+		height,
+		DXGI_FORMAT_R8G8B8A8_UNORM,
 		supportsTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0);
 
 	// Grab the references to the first buffer
@@ -218,11 +235,11 @@ void Graphics::ResizeBuffers(unsigned int width, unsigned int height)
 	Device->CreateDepthStencilView(
 		depthBufferTexture.Get(),
 		0,
-		DepthBufferDSV.GetAddressOf()); 
+		DepthBufferDSV.GetAddressOf());
 
 	// Bind the views to the pipeline, so rendering properly 
 	// uses their underlying textures
-	Context->OMSetRenderTargets(
+	Context11_1->OMSetRenderTargets(
 		1,
 		BackBufferRTV.GetAddressOf(), // This requires a pointer to a pointer (an array of pointers), so we get the address of the pointer
 		DepthBufferDSV.Get());
@@ -236,7 +253,7 @@ void Graphics::ResizeBuffers(unsigned int width, unsigned int height)
 	viewport.Height = (float)height;
 	viewport.MinDepth = 0.0f;
 	viewport.MaxDepth = 1.0f;
-	Context->RSSetViewports(1, &viewport);
+	Context11_1->RSSetViewports(1, &viewport);
 
 	// Are we in a fullscreen state?
 	SwapChain->GetFullscreenState(&isFullscreen, 0);
@@ -267,7 +284,7 @@ void Graphics::PrintDebugMessages()
 		// Reserve space for this message
 		D3D11_MESSAGE* message = (D3D11_MESSAGE*)malloc(messageSize);
 		InfoQueue->GetMessage(i, message, &messageSize);
-		
+
 		// Print and clean up memory
 		if (message)
 		{
@@ -296,4 +313,14 @@ void Graphics::PrintDebugMessages()
 
 	// Clear any messages we've printed
 	InfoQueue->ClearStoredMessages();
+}
+void Graphics::UpdateInstanceBuffer(const std::vector<InstanceData>& instances)
+{
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	HRESULT hr = Context11_1->Map(SharedBuffers::InstanceBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	if (SUCCEEDED(hr))
+	{
+		memcpy(mappedResource.pData, instances.data(), sizeof(InstanceData) * instances.size());
+		Context11_1->Unmap(SharedBuffers::InstanceBuffer.Get(), 0);
+	}
 }

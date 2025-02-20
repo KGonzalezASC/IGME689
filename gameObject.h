@@ -8,6 +8,7 @@
 #include "Transform.h"
 #include "Camera.h"
 #include "PhysicsManager.h"
+#include "SharedBuffers.h"
 
 class GameObject
 {
@@ -25,6 +26,7 @@ class GameObject
 	 void SetMesh(std::shared_ptr<Mesh> mesh);
 	 void UpdateTransformFromPhysicsBody(PhysicsManager* physicsManager);
 	 void Draw(std::shared_ptr<Camera> camera);
+	 void DrawInstanced(std::shared_ptr<Camera> camera, int instanceCount);
 
 
    private:

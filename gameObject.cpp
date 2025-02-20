@@ -45,3 +45,10 @@ void GameObject::Draw(std::shared_ptr<Camera> camera)
 	material->PrepareMaterial(transform, camera);
 	mesh->Draw();
 }
+
+// New method for instanced rendering
+void GameObject::DrawInstanced(std::shared_ptr<Camera> camera, int instanceCount)
+{
+	material->PrepareMaterial(transform, camera);
+	mesh->DrawInstanced(instanceCount);
+}
