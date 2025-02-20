@@ -17,6 +17,8 @@
 
 #include "SharedBuffers.h"
 
+#include "InputManager.h"
+
 #define NUM_INSTANCES 10
 
 class Game

@@ -36,6 +36,15 @@ void Game::Initialize()
 		Graphics::Context11_1->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	}
 
+	InputActionManager::GetAction(L"Value").OnTrigger.push_back([=](InputActionManager::InputData data)
+	{
+			if (data.inputType == InputActionManager::InputType::Value)
+			{
+				/*lights[0].Intensity = (int)data.value.GetValue<BYTE>().value() * 2;
+				lights[1].Intensity = (int)data.value.GetValue<BYTE>().value() * 2;*/
+			}
+	});
+
 	//camera basic setup //TODO: CAMERA NEEDS IMPROVED CONTROLS and bug fix so we can set proper looking at position instead of directly at mouse pos.
 	std::shared_ptr<Camera> camera = std::make_shared<Camera>(Window::AspectRatio(), XMFLOAT3(0.0f, 0.0f, -15.0f), XM_PIDIV4, 0.01f, 1000.0f, 5.0f, 0.0055f);
 	cameras.push_back(camera);
