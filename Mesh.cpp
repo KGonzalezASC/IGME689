@@ -1,395 +1,413 @@
 #include "Mesh.h"
 #include "Graphics.h"
-#include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
+#include <fstream>
+#include <cmath>
 
-using namespace DirectX;
-//implement header / interface
-
-//ctor
-Mesh::Mesh(const char* name, Vertex* vertexBuffer, int vertexCount, unsigned int* indexBuffer, int indexCount): name(name)
+// Constructor for non-FBX data remains unchanged.
+Mesh::Mesh(const char* name, Vertex* vertexBuffer, int vertexCount, unsigned int* indexBuffer, int indexCount)
+    : name(name)
 {
-	initBuffers(vertexBuffer, vertexCount, indexBuffer, indexCount);
+    initBuffers(vertexBuffer, vertexCount, indexBuffer, indexCount);
 }
 
-//obj ctor
-Mesh::Mesh(const char* name, const std::wstring& inputFile, bool isFBX) : name(name)
+// Constructor that loads an FBX file if isFBX is true.
+Mesh::Mesh(const char* name, const std::wstring& filePath, bool isFBX) : name(name)
 {
-	if (isFBX)
-	{
-		LoadFBX(inputFile);
-	}
-	else
-	{
-		// Existing OBJ loading code
-		// Author: Chris Cascioli
-// Purpose: Basic .OBJ 3D model loading, supporting positions, uvs and normals
-// 
-// - You are allowed to directly copy/paste this into your code base
-//   for assignments, given that you clearly cite that this is not
-//   code of your own design.
-
-
-// File input object
-		this->m_indicesCount = 0;
-		this->m_vertexCount = 0;
-		std::ifstream obj(inputFile);
-
-		// Check for successful open
-		if (!obj.is_open())
-			return;
-
-		// Variables used while reading the file
-		std::vector<XMFLOAT3> positions;	// Positions from the file
-		std::vector<XMFLOAT3> normals;		// Normals from the file
-		std::vector<XMFLOAT2> uvs;		// UVs from the file
-		std::vector<Vertex> verts;		// Verts we're assembling
-		std::vector<UINT> indices;		// Indices of these verts
-		int vertCounter = 0;			// Count of vertices
-		int indexCounter = 0;			// Count of indices
-		char chars[100];			// String for line reading
-
-		// Still have data left?
-		while (obj.good())
-		{
-			// Get the line (100 characters should be more than enough)
-			obj.getline(chars, 100);
-
-			// Check the type of line
-			if (chars[0] == 'v' && chars[1] == 'n')
-			{
-				// Read the 3 numbers directly into an XMFLOAT3
-				XMFLOAT3 norm;
-				sscanf_s(
-					chars,
-					"vn %f %f %f",
-					&norm.x, &norm.y, &norm.z);
-
-				// Add to the list of normals
-				normals.push_back(norm);
-			}
-			else if (chars[0] == 'v' && chars[1] == 't')
-			{
-				// Read the 2 numbers directly into an XMFLOAT2
-				XMFLOAT2 uv;
-				sscanf_s(
-					chars,
-					"vt %f %f",
-					&uv.x, &uv.y);
-
-				// Add to the list of uv's
-				uvs.push_back(uv);
-			}
-			else if (chars[0] == 'v')
-			{
-				// Read the 3 numbers directly into an XMFLOAT3
-				XMFLOAT3 pos;
-				sscanf_s(
-					chars,
-					"v %f %f %f",
-					&pos.x, &pos.y, &pos.z);
-
-				// Add to the positions
-				positions.push_back(pos);
-			}
-			else if (chars[0] == 'f')
-			{
-				// Read the face indices into an array
-				// NOTE: This assumes the given obj file contains
-				//  vertex positions, uv coordinates AND normals.
-				unsigned int i[12];
-				int numbersRead = sscanf_s(
-					chars,
-					"f %d/%d/%d %d/%d/%d %d/%d/%d %d/%d/%d",
-					&i[0], &i[1], &i[2],
-					&i[3], &i[4], &i[5],
-					&i[6], &i[7], &i[8],
-					&i[9], &i[10], &i[11]);
-
-				// If we only got the first number, chances are the OBJ
-				// file has no UV coordinates.  This isn't great, but we
-				// still want to load the model without crashing, so we
-				// need to re-read a different pattern (in which we assume
-				// there are no UVs denoted for any of the vertices)
-				if (numbersRead == 1)
-				{
-					// Re-read with a different pattern
-					numbersRead = sscanf_s(
-						chars,
-						"f %d//%d %d//%d %d//%d %d//%d",
-						&i[0], &i[2],
-						&i[3], &i[5],
-						&i[6], &i[8],
-						&i[9], &i[11]);
-
-					// The following indices are where the UVs should 
-					// have been, so give them a valid value
-					i[1] = 1;
-					i[4] = 1;
-					i[7] = 1;
-					i[10] = 1;
-
-					// If we have no UVs, create a single UV coordinate
-					// that will be used for all vertices
-					if (uvs.size() == 0)
-						uvs.push_back(XMFLOAT2(0, 0));
-				}
-
-				// - Create the verts by looking up
-				//    corresponding data from vectors
-				// - OBJ File indices are 1-based, so
-				//    they need to be adusted
-				Vertex v1;
-				v1.Position = positions[i[0] - 1];
-				v1.UV = uvs[i[1] - 1];
-				v1.Normal = normals[i[2] - 1];
-
-				Vertex v2;
-				v2.Position = positions[i[3] - 1];
-				v2.UV = uvs[i[4] - 1];
-				v2.Normal = normals[i[5] - 1];
-
-				Vertex v3;
-				v3.Position = positions[i[6] - 1];
-				v3.UV = uvs[i[7] - 1];
-				v3.Normal = normals[i[8] - 1];
-
-				// The model is most likely in a right-handed space,
-				// especially if it came from Maya.  We want to convert
-				// to a left-handed space for DirectX.  This means we 
-				// need to:
-				//  - Invert the Z position
-				//  - Invert the normal's Z
-				//  - Flip the winding order
-				// We also need to flip the UV coordinate since DirectX
-				// defines (0,0) as the top left of the texture, and many
-				// 3D modeling packages use the bottom left as (0,0)
-
-				// Flip the UV's since they're probably "upside down"
-				v1.UV.y = 1.0f - v1.UV.y;
-				v2.UV.y = 1.0f - v2.UV.y;
-				v3.UV.y = 1.0f - v3.UV.y;
-
-				// Flip Z (LH vs. RH)
-				v1.Position.z *= -1.0f;
-				v2.Position.z *= -1.0f;
-				v3.Position.z *= -1.0f;
-
-				// Flip normal's Z
-				v1.Normal.z *= -1.0f;
-				v2.Normal.z *= -1.0f;
-				v3.Normal.z *= -1.0f;
-
-				// Add the verts to the vector (flipping the winding order)
-				verts.push_back(v1);
-				verts.push_back(v3);
-				verts.push_back(v2);
-				vertCounter += 3;
-
-				// Add three more indices
-				indices.push_back(indexCounter); indexCounter += 1;
-				indices.push_back(indexCounter); indexCounter += 1;
-				indices.push_back(indexCounter); indexCounter += 1;
-
-				// Was there a 4th face?
-				// - 12 numbers read means 4 faces WITH uv's
-				// - 8 numbers read means 4 faces WITHOUT uv's
-				if (numbersRead == 12 || numbersRead == 8)
-				{
-					// Make the last vertex
-					Vertex v4;
-					v4.Position = positions[i[9] - 1];
-					v4.UV = uvs[i[10] - 1];
-					v4.Normal = normals[i[11] - 1];
-
-					// Flip the UV, Z pos and normal's Z
-					v4.UV.y = 1.0f - v4.UV.y;
-					v4.Position.z *= -1.0f;
-					v4.Normal.z *= -1.0f;
-
-					// Add a whole triangle (flipping the winding order)
-					verts.push_back(v1);
-					verts.push_back(v4);
-					verts.push_back(v3);
-					vertCounter += 3;
-
-					// Add three more indices
-					indices.push_back(indexCounter); indexCounter += 1;
-					indices.push_back(indexCounter); indexCounter += 1;
-					indices.push_back(indexCounter); indexCounter += 1;
-				}
-			}
-		}
-
-		// Close the file and create the actual buffers
-		obj.close();
-		initBuffers(&verts[0], vertCounter, &indices[0], indexCounter);
-
-		// - At this point, "verts" is a vector of Vertex structs, and can be used
-		//    directly to create a vertex buffer:  &verts[0] is the address of the first vert
-		//
-		// - The vector "indices" is similar. It's a vector of unsigned ints and
-		//    can be used directly for the index buffer: &indices[0] is the address of the first int
-		//
-		// - "vertCounter" is the number of vertices
-		// - "indexCounter" is the number of indices
-		// - Yes, these are effectively the same since OBJs do not index entire vertices!  This means
-		//    an index buffer isn't doing much for us.  We could try to optimize the mesh ourselves
-		//    and detect duplicate vertices, but at that point it would be better to use a more
-		//    sophisticated model loading library like TinyOBJLoader or The Open Asset Importer Library
-	}
-}
-//Mesh::Mesh(const char* name, const std::wstring& objFile) : name(name)
-//{
-//	
-//}
-
-
-void Mesh::LoadFBX(const std::wstring& filePath)
-{
-	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(std::string(filePath.begin(), filePath.end()), aiProcess_Triangulate | aiProcess_ConvertToLeftHanded);
-
-	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
-	{
-		// Handle error
-		return;
-	}
-
-	ProcessNode(scene->mRootNode, scene);
-	LoadAnimations(scene);
-	// Process the scene to extract mesh and animation data
-	// This is a simplified example, you need to handle bones, weights, and animations properly
-
-	std::vector<Vertex> vertices;
-	std::vector<unsigned int> indices;
-
-	for (unsigned int i = 0; i < scene->mNumMeshes; i++)
-	{
-		aiMesh* mesh = scene->mMeshes[i];
-
-		for (unsigned int j = 0; j < mesh->mNumVertices; j++)
-		{
-			Vertex vertex;
-			vertex.Position = XMFLOAT3(mesh->mVertices[j].x, mesh->mVertices[j].y, mesh->mVertices[j].z);
-			vertex.UV = XMFLOAT2(mesh->mTextureCoords[0][j].x, mesh->mTextureCoords[0][j].y);
-			vertex.Normal = XMFLOAT3(mesh->mNormals[j].x, mesh->mNormals[j].y, mesh->mNormals[j].z);
-			// Initialize bone weights and indices to zero
-			vertex.BoneWeights = XMFLOAT4(0, 0, 0, 0);
-			vertex.BoneIndices = XMUINT4(0, 0, 0, 0);
-			vertices.push_back(vertex);
-		}
-
-		for (unsigned int j = 0; j < mesh->mNumFaces; j++)
-		{
-			aiFace face = mesh->mFaces[j];
-			for (unsigned int k = 0; k < face.mNumIndices; k++)
-			{
-				indices.push_back(face.mIndices[k]);
-			}
-		}
-	}
-
-	initBuffers(vertices.data(), vertices.size(), indices.data(), indices.size());
+    if (isFBX)
+    {
+        LoadFBX(filePath);
+    }
+    // Else: implement other loaders as needed.
 }
 
-void Mesh::ProcessNode(aiNode* node, const aiScene* scene) {
-	for (unsigned int i = 0; i < node->mNumMeshes; i++) {
-		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		ProcessMesh(mesh, scene);
-	}
+Mesh::~Mesh() {}
 
-	for (unsigned int i = 0; i < node->mNumChildren; i++) {
-		ProcessNode(node->mChildren[i], scene);
-	}
-}
-
-void Mesh::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
-	// Process vertices, indices, and materials here...
-
-	// Load bones
-	LoadBones(mesh, bones);
-}
-
-void Mesh::LoadBones(aiMesh* mesh, std::vector<Bone>& bones) {
-	for (unsigned int i = 0; i < mesh->mNumBones; i++) {
-		aiBone* aiBone = mesh->mBones[i];
-		Bone bone;
-		bone.name = aiBone->mName.C_Str();
-		bone.offsetMatrix = DirectX::XMMatrixTranspose(DirectX::XMMATRIX(&aiBone->mOffsetMatrix.a1));
-		bones.push_back(bone);
-	}
-}
-
-void Mesh::LoadAnimations(const aiScene* scene) {
-	for (unsigned int i = 0; i < scene->mNumAnimations; i++) {
-		aiAnimation* aiAnim = scene->mAnimations[i];
-		Animation anim;
-		anim.name = aiAnim->mName.C_Str();
-		anim.duration = static_cast<float>(aiAnim->mDuration);
-		anim.ticksPerSecond = static_cast<float>(aiAnim->mTicksPerSecond ? aiAnim->mTicksPerSecond : 25.0f);
-		animations.push_back(anim);
-	}
-}
-
-void Mesh::UpdateAnimation(float deltaTime) {
-	animationTime += deltaTime;
-	// Update bone transformations based on the current animation time
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//dtor
-Mesh::~Mesh(){}
-
-void Mesh::Draw() {
-	//set buffers in the input assembler stage once per object
-	//like webgpu buffers are set per frame before drawIndexed
-	UINT stride = sizeof(Vertex);
-	UINT offset = 0;
-	Graphics::Context->IASetVertexBuffers(0, 1, m_vertexBuffer.GetAddressOf(), &stride, &offset);
-	Graphics::Context->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
-	//draw
-	Graphics::Context->DrawIndexed(this->m_indicesCount, 0, 0);
-}
-
+// initBuffers creates the vertex and index buffers.
 void Mesh::initBuffers(Vertex* vertices, size_t numVerts, unsigned int* indices, size_t numIndices)
 {
-	//interleave buffer (x,y,z,color) // vertex buffer this might move later to draw once vertices move due to animation /movement
-	D3D11_BUFFER_DESC vbd = {};
-	vbd.Usage = D3D11_USAGE_IMMUTABLE;
-	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER; //bind as vertex buffer
-	vbd.ByteWidth = sizeof(Vertex) * (UINT)numVerts;
-	vbd.CPUAccessFlags = 0;
-	vbd.MiscFlags = 0;
-	vbd.StructureByteStride = 0;
-	D3D11_SUBRESOURCE_DATA initialVertexData = {};
-	initialVertexData.pSysMem = vertices;
-	Graphics::Device->CreateBuffer(&vbd, &initialVertexData, m_vertexBuffer.GetAddressOf());
-	this->m_vertexCount = (UINT)numVerts;
+    D3D11_BUFFER_DESC vbd = {};
+    vbd.Usage = D3D11_USAGE_IMMUTABLE;
+    vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    vbd.ByteWidth = sizeof(Vertex) * (UINT)numVerts;
+    vbd.CPUAccessFlags = 0;
+    D3D11_SUBRESOURCE_DATA initialVertexData = {};
+    initialVertexData.pSysMem = vertices;
+    Graphics::Device->CreateBuffer(&vbd, &initialVertexData, m_vertexBuffer.GetAddressOf());
+    m_vertexCount = (UINT)numVerts;
 
-	//index buffer so we dont have to store duplicate vertices
-	//since each mesh could have unique structures are not the same shape (like a square) we have to declare a new index buffer for each mesh
-	D3D11_BUFFER_DESC ibd = {};
-	ibd.Usage = D3D11_USAGE_IMMUTABLE;
-	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER; //bind as index buffer
-	ibd.ByteWidth = sizeof(unsigned int) * (UINT)numIndices;
-	ibd.CPUAccessFlags = 0;
-	ibd.MiscFlags = 0;
-	ibd.StructureByteStride = 0;
-	D3D11_SUBRESOURCE_DATA initialIndexData = {};
-	initialIndexData.pSysMem = indices;
-	Graphics::Device->CreateBuffer(&ibd, &initialIndexData, m_indexBuffer.GetAddressOf());
-	this->m_indicesCount = (UINT)numIndices;
+    D3D11_BUFFER_DESC ibd = {};
+    ibd.Usage = D3D11_USAGE_IMMUTABLE;
+    ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    ibd.ByteWidth = sizeof(unsigned int) * (UINT)numIndices;
+    ibd.CPUAccessFlags = 0;
+    D3D11_SUBRESOURCE_DATA initialIndexData = {};
+    initialIndexData.pSysMem = indices;
+    Graphics::Device->CreateBuffer(&ibd, &initialIndexData, m_indexBuffer.GetAddressOf());
+    m_indicesCount = (UINT)numIndices;
+}
+
+// LoadFBX loads the model and animation data using Assimp.
+void Mesh::LoadFBX(const std::wstring& filePath)
+{
+    m_scene = m_importer.ReadFile(std::string(filePath.begin(), filePath.end()),
+        aiProcess_Triangulate | aiProcess_ConvertToLeftHanded | aiProcess_FlipUVs);
+    if (!m_scene || m_scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !m_scene->mRootNode)
+    {
+        // Handle error (e.g., log m_importer.GetErrorString())
+        return;
+    }
+
+    // Compute the global inverse transform.
+    m_GlobalInverseTransform = m_scene->mRootNode->mTransformation;
+    m_GlobalInverseTransform.Inverse();
+
+    // Optionally traverse the node hierarchy if needed.
+    ProcessNode(m_scene->mRootNode, m_scene);
+    LoadAnimations(m_scene);
+
+    // For simplicity, load only the first mesh.
+    aiMesh* aMesh = m_scene->mMeshes[0];
+
+    // Create a vertex vector and initialize bone data.
+    std::vector<Vertex> vertices;
+    vertices.resize(aMesh->mNumVertices);
+    for (unsigned int j = 0; j < aMesh->mNumVertices; j++)
+    {
+        Vertex vertex;
+        vertex.Position = XMFLOAT3(aMesh->mVertices[j].x, aMesh->mVertices[j].y, aMesh->mVertices[j].z);
+        if (aMesh->mTextureCoords[0])
+            vertex.UV = XMFLOAT2(aMesh->mTextureCoords[0][j].x, aMesh->mTextureCoords[0][j].y);
+        else
+            vertex.UV = XMFLOAT2(0.0f, 0.0f);
+        vertex.Normal = XMFLOAT3(aMesh->mNormals[j].x, aMesh->mNormals[j].y, aMesh->mNormals[j].z);
+        // Initialize bone data.
+        vertex.BoneIndices = XMUINT4(0, 0, 0, 0);
+        vertex.BoneWeights = XMFLOAT4(0, 0, 0, 0);
+        vertices[j] = vertex;
+    }
+
+    // Process bones and assign weights to vertices.
+    LoadBones(aMesh, vertices);
+
+    // Process indices.
+    std::vector<unsigned int> indices;
+    for (unsigned int j = 0; j < aMesh->mNumFaces; j++)
+    {
+        aiFace face = aMesh->mFaces[j];
+        for (unsigned int k = 0; k < face.mNumIndices; k++)
+        {
+            indices.push_back(face.mIndices[k]);
+        }
+    }
+
+    // Create the GPU buffers.
+    initBuffers(vertices.data(), vertices.size(), indices.data(), indices.size());
+
+    // Create a constant buffer for bone transforms (support up to 100 bones).
+    if (!m_boneBuffer)
+    {
+        D3D11_BUFFER_DESC bd = {};
+        bd.Usage = D3D11_USAGE_DEFAULT;
+        bd.ByteWidth = sizeof(XMMATRIX) * 100;
+        bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+        HRESULT hr = Graphics::Device->CreateBuffer(&bd, nullptr, m_boneBuffer.GetAddressOf());
+        // Check hr as needed.
+    }
+
+    // Resize boneTransforms vector.
+    boneTransforms.resize(bones.size(), XMMatrixIdentity());
+}
+
+// ProcessNode – can be used to process multiple meshes; here it is minimal.
+void Mesh::ProcessNode(aiNode* node, const aiScene* scene)
+{
+    for (unsigned int i = 0; i < node->mNumMeshes; i++)
+    {
+        aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+        ProcessMesh(mesh, scene);
+    }
+    for (unsigned int i = 0; i < node->mNumChildren; i++)
+    {
+        ProcessNode(node->mChildren[i], scene);
+    }
+}
+
+// ProcessMesh – for further per-mesh processing (not used in this example).
+void Mesh::ProcessMesh(aiMesh* mesh, const aiScene* scene)
+{
+    // Optionally extract additional data.
+}
+
+// LoadBones assigns bone weights from the aiMesh to the vertices.
+void Mesh::LoadBones(aiMesh* mesh, std::vector<Vertex>& vertices)
+{
+    for (unsigned int i = 0; i < mesh->mNumBones; i++)
+    {
+        aiBone* bone = mesh->mBones[i];
+        std::string boneName(bone->mName.C_Str());
+        unsigned int boneIndex = 0;
+        if (boneMapping.find(boneName) == boneMapping.end())
+        {
+            boneIndex = static_cast<unsigned int>(bones.size());
+            boneMapping[boneName] = boneIndex;
+            Bone newBone;
+            newBone.name = boneName;
+            newBone.offsetMatrix = bone->mOffsetMatrix; // store as-is; conversion later
+            bones.push_back(newBone);
+        }
+        else
+        {
+            boneIndex = boneMapping[boneName];
+        }
+        // Assign each weight to the corresponding vertex (max 4 influences).
+        for (unsigned int j = 0; j < bone->mNumWeights; j++)
+        {
+            unsigned int vertexId = bone->mWeights[j].mVertexId;
+            float weight = bone->mWeights[j].mWeight;
+            Vertex& v = vertices[vertexId];
+            if (v.BoneWeights.x == 0.0f)
+            {
+                v.BoneIndices.x = boneIndex;
+                v.BoneWeights.x = weight;
+            }
+            else if (v.BoneWeights.y == 0.0f)
+            {
+                v.BoneIndices.y = boneIndex;
+                v.BoneWeights.y = weight;
+            }
+            else if (v.BoneWeights.z == 0.0f)
+            {
+                v.BoneIndices.z = boneIndex;
+                v.BoneWeights.z = weight;
+            }
+            else if (v.BoneWeights.w == 0.0f)
+            {
+                v.BoneIndices.w = boneIndex;
+                v.BoneWeights.w = weight;
+            }
+            // Extra weights are ignored.
+        }
+    }
+}
+
+// LoadAnimations loads basic animation data from the scene.
+void Mesh::LoadAnimations(const aiScene* scene)
+{
+    for (unsigned int i = 0; i < scene->mNumAnimations; i++)
+    {
+        aiAnimation* aiAnim = scene->mAnimations[i];
+        Animation anim;
+        anim.name = aiAnim->mName.C_Str();
+        anim.duration = static_cast<float>(aiAnim->mDuration);
+        anim.ticksPerSecond = static_cast<float>(aiAnim->mTicksPerSecond ? aiAnim->mTicksPerSecond : 25.0f);
+        animations.push_back(anim);
+    }
+}
+
+// --- Animation Interpolation and Hierarchy Traversal ---
+
+// Converts an aiMatrix4x4 to an XMMATRIX.
+XMMATRIX Mesh::AiMatrixToXMMATRIX(const aiMatrix4x4& from)
+{
+    return XMMATRIX(
+        from.a1, from.b1, from.c1, from.d1,
+        from.a2, from.b2, from.c2, from.d2,
+        from.a3, from.b3, from.c3, from.d3,
+        from.a4, from.b4, from.c4, from.d4
+    );
+}
+
+// Returns the global inverse transform as an XMMATRIX.
+XMMATRIX Mesh::GetGlobalInverseMatrix()
+{
+    return AiMatrixToXMMATRIX(m_GlobalInverseTransform);
+}
+
+// Finds the node animation channel for a given node name.
+const aiNodeAnim* Mesh::FindNodeAnim(const aiAnimation* animation, const std::string& nodeName)
+{
+    for (unsigned int i = 0; i < animation->mNumChannels; i++)
+    {
+        const aiNodeAnim* nodeAnim = animation->mChannels[i];
+        if (std::string(nodeAnim->mNodeName.C_Str()) == nodeName)
+            return nodeAnim;
+    }
+    return nullptr;
+}
+
+unsigned int Mesh::FindScaling(float animationTime, const aiNodeAnim* nodeAnim)
+{
+    for (unsigned int i = 0; i < nodeAnim->mNumScalingKeys - 1; i++)
+    {
+        if (animationTime < (float)nodeAnim->mScalingKeys[i + 1].mTime)
+            return i;
+    }
+    return 0;
+}
+
+void Mesh::CalcInterpolatedScaling(aiVector3D& out, float animationTime, const aiNodeAnim* nodeAnim)
+{
+    if (nodeAnim->mNumScalingKeys == 1)
+    {
+        out = nodeAnim->mScalingKeys[0].mValue;
+        return;
+    }
+    unsigned int scalingIndex = FindScaling(animationTime, nodeAnim);
+    unsigned int nextScalingIndex = scalingIndex + 1;
+    float deltaTime = (float)(nodeAnim->mScalingKeys[nextScalingIndex].mTime - nodeAnim->mScalingKeys[scalingIndex].mTime);
+    float factor = (animationTime - (float)nodeAnim->mScalingKeys[scalingIndex].mTime) / deltaTime;
+    const aiVector3D& start = nodeAnim->mScalingKeys[scalingIndex].mValue;
+    const aiVector3D& end = nodeAnim->mScalingKeys[nextScalingIndex].mValue;
+    out = start + factor * (end - start);
+}
+
+unsigned int Mesh::FindRotation(float animationTime, const aiNodeAnim* nodeAnim)
+{
+    for (unsigned int i = 0; i < nodeAnim->mNumRotationKeys - 1; i++)
+    {
+        if (animationTime < (float)nodeAnim->mRotationKeys[i + 1].mTime)
+            return i;
+    }
+    return 0;
+}
+
+void Mesh::CalcInterpolatedRotation(aiQuaternion& out, float animationTime, const aiNodeAnim* nodeAnim)
+{
+    if (nodeAnim->mNumRotationKeys == 1)
+    {
+        out = nodeAnim->mRotationKeys[0].mValue;
+        return;
+    }
+    unsigned int rotationIndex = FindRotation(animationTime, nodeAnim);
+    unsigned int nextRotationIndex = rotationIndex + 1;
+    float deltaTime = (float)(nodeAnim->mRotationKeys[nextRotationIndex].mTime - nodeAnim->mRotationKeys[rotationIndex].mTime);
+    float factor = (animationTime - (float)nodeAnim->mRotationKeys[rotationIndex].mTime) / deltaTime;
+    const aiQuaternion& start = nodeAnim->mRotationKeys[rotationIndex].mValue;
+    const aiQuaternion& end = nodeAnim->mRotationKeys[nextRotationIndex].mValue;
+    aiQuaternion::Interpolate(out, start, end, factor);
+    out = out.Normalize();
+}
+
+unsigned int Mesh::FindPosition(float animationTime, const aiNodeAnim* nodeAnim)
+{
+    for (unsigned int i = 0; i < nodeAnim->mNumPositionKeys - 1; i++)
+    {
+        if (animationTime < (float)nodeAnim->mPositionKeys[i + 1].mTime)
+            return i;
+    }
+    return 0;
+}
+
+void Mesh::CalcInterpolatedPosition(aiVector3D& out, float animationTime, const aiNodeAnim* nodeAnim)
+{
+    if (nodeAnim->mNumPositionKeys == 1)
+    {
+        out = nodeAnim->mPositionKeys[0].mValue;
+        return;
+    }
+    unsigned int positionIndex = FindPosition(animationTime, nodeAnim);
+    unsigned int nextPositionIndex = positionIndex + 1;
+    float deltaTime = (float)(nodeAnim->mPositionKeys[nextPositionIndex].mTime - nodeAnim->mPositionKeys[positionIndex].mTime);
+    float factor = (animationTime - (float)nodeAnim->mPositionKeys[positionIndex].mTime) / deltaTime;
+    const aiVector3D& start = nodeAnim->mPositionKeys[positionIndex].mValue;
+    const aiVector3D& end = nodeAnim->mPositionKeys[nextPositionIndex].mValue;
+    out = start + factor * (end - start);
+}
+
+// Recursively traverses the node hierarchy to compute each bone’s final transform.
+void Mesh::ReadNodeHeirarchy(float animationTime, const aiNode* node, const XMMATRIX& parentTransform)
+{
+    // Convert the node's transformation matrix.
+    XMMATRIX nodeTransformation = AiMatrixToXMMATRIX(node->mTransformation);
+
+    const aiAnimation* animation = m_scene->mAnimations[0];
+    const aiNodeAnim* nodeAnim = FindNodeAnim(animation, node->mName.C_Str());
+    if (nodeAnim)
+    {
+        // Interpolate scaling.
+        aiVector3D scaling;
+        CalcInterpolatedScaling(scaling, animationTime, nodeAnim);
+        XMMATRIX scalingM = XMMatrixScaling(scaling.x, scaling.y, scaling.z);
+
+        // Interpolate rotation.
+        aiQuaternion rotation;
+        CalcInterpolatedRotation(rotation, animationTime, nodeAnim);
+        XMVECTOR quat = XMVectorSet(rotation.x, rotation.y, rotation.z, rotation.w);
+        XMMATRIX rotationM = XMMatrixRotationQuaternion(quat);
+
+        // Interpolate translation.
+        aiVector3D translation;
+        CalcInterpolatedPosition(translation, animationTime, nodeAnim);
+        XMMATRIX translationM = XMMatrixTranslation(translation.x, translation.y, translation.z);
+
+        // Combine interpolated transformations.
+        nodeTransformation = scalingM * rotationM * translationM;
+    }
+
+    // Compute global transformation for this node.
+    XMMATRIX globalTransformation = parentTransform * nodeTransformation;
+
+    // If this node corresponds to a bone, update its final transform.
+    std::string nodeName(node->mName.C_Str());
+    if (boneMapping.find(nodeName) != boneMapping.end())
+    {
+        unsigned int boneIndex = boneMapping[nodeName];
+        // Final transformation: globalInverse * globalTransformation * boneOffset.
+        XMMATRIX globalInverse = GetGlobalInverseMatrix();
+        XMMATRIX boneOffset = AiMatrixToXMMATRIX(bones[boneIndex].offsetMatrix);
+        XMMATRIX finalTransformation = globalInverse * globalTransformation * boneOffset;
+        if (boneIndex < boneTransforms.size())
+            boneTransforms[boneIndex] = finalTransformation;
+        else
+            boneTransforms.push_back(finalTransformation);
+    }
+
+    // Recurse for each child.
+    for (unsigned int i = 0; i < node->mNumChildren; i++)
+    {
+        ReadNodeHeirarchy(animationTime, node->mChildren[i], globalTransformation);
+    }
+}
+
+// BoneTransform computes final bone transforms at a given time.
+void Mesh::BoneTransform(float time, std::vector<XMMATRIX>& transforms)
+{
+    // Assume using the first animation.
+    const aiAnimation* animation = m_scene->mAnimations[0];
+    float ticksPerSecond = animation->mTicksPerSecond != 0 ? (float)animation->mTicksPerSecond : 25.0f;
+    float timeInTicks = time * ticksPerSecond;
+    float animationTime = fmod(timeInTicks, (float)animation->mDuration);
+
+    // Start recursion from the root node.
+    ReadNodeHeirarchy(animationTime, m_scene->mRootNode, XMMatrixIdentity());
+
+    // Return the computed bone transforms.
+    transforms = boneTransforms;
+}
+
+// UpdateAnimation advances the animation time and updates bone transforms.
+void Mesh::UpdateAnimation(float deltaTime)
+{
+    animationTime += deltaTime;
+    BoneTransform(animationTime, boneTransforms);
+}
+
+// Draw binds the buffers, updates the bone constant buffer, and issues the draw call.
+void Mesh::Draw()
+{
+    UINT stride = sizeof(Vertex);
+    UINT offset = 0;
+    Graphics::Context->IASetVertexBuffers(0, 1, m_vertexBuffer.GetAddressOf(), &stride, &offset);
+    Graphics::Context->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+
+    // Update the bone constant buffer with the latest transforms.
+    if (!boneTransforms.empty() && m_boneBuffer)
+    {
+        Graphics::Context->UpdateSubresource(m_boneBuffer.Get(), 0, nullptr, boneTransforms.data(), 0, 0);
+        // Bind the bone buffer to slot b3 in the vertex shader.
+        Graphics::Context->VSSetConstantBuffers(3, 1, m_boneBuffer.GetAddressOf());
+    }
+
+    Graphics::Context->DrawIndexed(m_indicesCount, 0, 0);
 }

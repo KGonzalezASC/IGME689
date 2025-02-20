@@ -1,77 +1,63 @@
 #include "Material.h"
-//ctor
+
+// Constructor
 Material::Material(const char* name, std::shared_ptr<SimplePixelShader> ps, std::shared_ptr<SimpleVertexShader> vs, DirectX::XMFLOAT3 tint) :
-	name(name),
-	pixelShader(ps),
-	vertexShader(vs),
-	colorTint(tint)
-{
-
-}
-
-//dtor
-Material::~Material()
+    name(name),
+    pixelShader(ps),
+    vertexShader(vs),
+    colorTint(tint)
 {
 }
 
-//getters and setters
+Material::~Material() {}
+
 const char* Material::GetName()
 {
-	return name;
+    return name;
 }
 
 std::shared_ptr<SimplePixelShader> Material::GetPixelShader()
 {
-	return pixelShader;
+    return pixelShader;
 }
 
 std::shared_ptr<SimpleVertexShader> Material::GetVertexShader()
 {
-	return vertexShader;
+    return vertexShader;
 }
 
 DirectX::XMFLOAT3 Material::GetColorTint()
 {
-	return colorTint;
+    return colorTint;
 }
 
 void Material::SetPixelShader(std::shared_ptr<SimplePixelShader> ps)
 {
-	pixelShader = ps;
+    pixelShader = ps;
 }
 
 void Material::SetVertexShader(std::shared_ptr<SimpleVertexShader> vs)
 {
-	vertexShader = vs;
+    vertexShader = vs;
 }
 
 void Material::SetColorTint(DirectX::XMFLOAT3 color)
 {
-	colorTint = color;
+    colorTint = color;
 }
 
-
-//LIKELY THIS AND SIMPLE SHADER NEEDS A REWRITE
 void Material::PrepareMaterial(std::shared_ptr<Transform> transform, std::shared_ptr<Camera> camera)
 {
-    // 'Turn on' these shaders
     vertexShader->SetShader();
     pixelShader->SetShader();
 
-  
     vertexShader->SetMatrix4x4("world", transform->getWorldMatrix());
-   
-
-    // View and projection matrices are likely per-frame and always need to be set
     vertexShader->SetMatrix4x4("view", camera->getViewMatrix());
     vertexShader->SetMatrix4x4("projection", camera->getProjectionMatrix());
     vertexShader->CopyAllBufferData();
 
-    // Pixel shader settings
     pixelShader->SetFloat3("colorTint", colorTint);
     pixelShader->CopyAllBufferData();
 
-    // Mark the first pass as done
     firstPass = false;
 }
-

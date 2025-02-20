@@ -35,7 +35,7 @@ void Game::Initialize()
 
 
 	//CreateGeometry(); //updating for A03
-	LoadFBX(FixPath(L"../../Assets/Models/optoBee.fbx").c_str());
+	LoadFBX(FixPath(L"../../Assets/Models/silly_dancing.fbx").c_str());
 	// Set initial graphics API state pipeline settings
 	{
 		Graphics::Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
