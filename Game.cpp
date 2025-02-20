@@ -30,22 +30,22 @@ void Game::Initialize()
 
 
 	//TODO: REPLACE WITH PBR MATERIALS (i.e remove the tint and or make accomodations for both in PS)
-	std::shared_ptr<Material> redMaterial = std::make_shared<Material>("Red Solid", pixelShader, vertexShader, XMFLOAT3(1.0f, 0.0f, 0.0f));
+	std::shared_ptr<Material> redMaterial = std::make_shared<Material>("Red Solid", pixelShader, vertexShader, XMFLOAT3(1.0f, 0.0f, 0.0f), 0.5);
 	materials.insert(materials.end(), { redMaterial});
 
-	std::shared_ptr<Material> orangeMaterial = std::make_shared<Material>("Orange Solid", pixelShader, vertexShader, XMFLOAT3(1.0f, 165.f/255.f, 0.0f));
+	std::shared_ptr<Material> orangeMaterial = std::make_shared<Material>("Orange Solid", pixelShader, vertexShader, XMFLOAT3(1.0f, 165.f/255.f, 0.0f), 0.5);
 	materials.insert(materials.end(), { orangeMaterial });
 	
-	std::shared_ptr<Material> yellowMaterial = std::make_shared<Material>("Yellow Solid", pixelShader, vertexShader, XMFLOAT3(1.0f, 1.0f, 0.0f));
+	std::shared_ptr<Material> yellowMaterial = std::make_shared<Material>("Yellow Solid", pixelShader, vertexShader, XMFLOAT3(1.0f, 1.0f, 0.0f), 0.5);
 	materials.insert(materials.end(), { yellowMaterial });
 	
-	std::shared_ptr<Material> greenMaterial = std::make_shared<Material>("Green Solid", pixelShader, vertexShader, XMFLOAT3(0.0f, 1.0f, 0.0f));
+	std::shared_ptr<Material> greenMaterial = std::make_shared<Material>("Green Solid", pixelShader, vertexShader, XMFLOAT3(0.0f, 1.0f, 0.0f), 0.5);
 	materials.insert(materials.end(), { greenMaterial });
 	
-	std::shared_ptr<Material> blueMaterial = std::make_shared<Material>("Blue Solid", pixelShader, vertexShader, XMFLOAT3(0.0f, 0.0f, 1.0f));
+	std::shared_ptr<Material> blueMaterial = std::make_shared<Material>("Blue Solid", pixelShader, vertexShader, XMFLOAT3(0.0f, 0.0f, 1.0f), 0.5);
 	materials.insert(materials.end(), { blueMaterial });
 	
-	std::shared_ptr<Material> purpleMaterial = std::make_shared<Material>("Purple Solid", pixelShader, vertexShader, XMFLOAT3(0.5f, 0.0f, 0.5f));
+	std::shared_ptr<Material> purpleMaterial = std::make_shared<Material>("Purple Solid", pixelShader, vertexShader, XMFLOAT3(0.5f, 0.0f, 0.5f), 0.5);
 	materials.insert(materials.end(), { purpleMaterial });
 
 	physicsManager = new PhysicsManager();
