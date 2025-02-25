@@ -38,7 +38,7 @@ void Game::Initialize()
 	LoadFBX(FixPath(L"../../Assets/Models/silly_dancing.fbx").c_str());
 	// Set initial graphics API state pipeline settings
 	{
-		Graphics::Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		/*Graphics::Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);*/
 	}
 
 	//camera basic setup //TODO: CAMERA NEEDS IMPROVED CONTROLS and bug fix so we can set proper looking at position instead of directly at mouse pos.
@@ -247,8 +247,8 @@ void Game::Draw(float deltaTime, float totalTime)
 	for (auto& entity : entities)
 	{
 		//set color tint
-		entity->UpdateAnimation(deltaTime);
-		entity->Draw(cameras[activeCamera]);
+		//entity->UpdateAnimation(deltaTime);
+		entity->Draw(cameras[activeCamera], deltaTime);
 	}
 
 	//draw ui we have to do this after drawing everything else to ensure sorting

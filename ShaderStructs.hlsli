@@ -9,6 +9,8 @@ struct VertexShaderInput
     float2 uv : TEXCOORD;
     float3 normal : NORMAL;
     //float3 tangent : TANGENT;
+    uint4 BoneIDs : BLENDINDICES;
+    float4 Weights : BLENDWEIGHT;
 };
 
 

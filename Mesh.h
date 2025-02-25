@@ -164,7 +164,7 @@ class Mesh
     //const std::vector<DirectX::XMFLOAT4X4>& GetFinalBoneTransforms() const { return mFinalBoneTransforms; }
     //void LoadBones(aiMesh* mesh, std::vector<VertexBoneData>* BonesData, MeshBoneData* BoneData_ECS);
 
-    void Draw();
+    void Draw( float deltaTime);
 
     const aiScene* scene = 0;
     Assimp::Importer importer;

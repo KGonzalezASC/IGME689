@@ -1,5 +1,6 @@
 #include "Mesh.h"
 #include "Graphics.h"
+#include <iostream>
 
 using namespace DirectX;
 //implement header / interface
@@ -16,7 +17,7 @@ std::map<std::string, UINT> mBoneMappingTemp;
 std::vector<BoneInfo> mBoneInfo;
 DirectX::XMMATRIX temp_NodeTransform = DirectX::XMMatrixIdentity();
 
-MeshBoneData* meshBoneData = new MeshBoneData(mBoneMappingTemp, mBoneInfo, UINT(0), temp_NodeTransform);
+std::shared_ptr<MeshBoneData> meshBoneData = make_shared<MeshBoneData>(mBoneMappingTemp, mBoneInfo, UINT(0), temp_NodeTransform);
 
 //ctor
 Mesh::Mesh(const char* name, Vertex* vertexBuffer, int vertexCount, unsigned int* indexBuffer, int indexCount): name(name)
@@ -316,7 +317,9 @@ void Mesh::LoadFBX(const std::wstring& filePath)
 
 		// Load bone data
 		LoadBones(mesh, &Bones /*, &meshBoneData*/);
-
+		
+		//print bone count to log
+		std::cout << "Bone Count: " << Bones.size() << std::endl;
 		aiMatrix4x4 offset = scene->mRootNode->mTransformation;
 		meshBoneData->GlobalInverseTransform = DirectX::XMMATRIX(offset.a1, offset.a2, offset.a3, offset.a4,
 			offset.b1, offset.b2, offset.b3, offset.b4,
@@ -360,9 +363,19 @@ void Mesh::LoadFBX(const std::wstring& filePath)
 //dtor
 Mesh::~Mesh(){}
 
-void Mesh::Draw() {
+void Mesh::Draw(float deltaTime) {
+
+
+
+	static float animationTime = 0.0f;
+	animationTime += deltaTime;
+
+	std::vector<DirectX::XMFLOAT4X4> transforms;
+	BoneTransform(deltaTime, transforms);
+
 	//set buffers in the input assembler stage once per object
 	//like webgpu buffers are set per frame before drawIndexed
+
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
 	Graphics::Context->IASetVertexBuffers(0, 1, m_vertexBuffer.GetAddressOf(), &stride, &offset);
@@ -399,6 +412,8 @@ void Mesh::initBuffers(Vertex* vertices, size_t numVerts, unsigned int* indices,
 	initialIndexData.pSysMem = indices;
 	Graphics::Device->CreateBuffer(&ibd, &initialIndexData, m_indexBuffer.GetAddressOf());
 	this->m_indicesCount = (UINT)numIndices;
+
+	Graphics::Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
 void VertexBoneData::AddBoneData(UINT BoneID, float Weight)
