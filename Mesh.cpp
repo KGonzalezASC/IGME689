@@ -414,6 +414,8 @@ void Mesh::initBuffers(Vertex* vertices, size_t numVerts, unsigned int* indices,
 	this->m_indicesCount = (UINT)numIndices;
 
 	Graphics::Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+
 }
 
 void VertexBoneData::AddBoneData(UINT BoneID, float Weight)
