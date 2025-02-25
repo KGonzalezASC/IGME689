@@ -271,9 +271,8 @@ void Game::Update(float deltaTime, float totalTime)
 	cameras[activeCamera]->Update(deltaTime);
 	updateUi(deltaTime);
 	audioManager->update_audio(deltaTime);
-
-	// To play a sound, call audioManager->playSound("filepath"). For example:
-	//audioManager->playSound("Sounds/vine-thud.wav");
+	// Temp code to test sound effect playback
+	PlayFunnySoundsOnPress();
 }
 
 
@@ -329,4 +328,24 @@ void Game::Draw(float deltaTime, float totalTime)
 			Graphics::BackBufferRTV.GetAddressOf(),
 			Graphics::DepthBufferDSV.Get());
 	}
+}
+
+void Game::PlayFunnySoundsOnPress()
+{
+	if (InputManager::KeyPress('1'))
+		audioManager->playSound("Sounds/vine-boom.wav");
+	if (InputManager::KeyPress('2'))
+		audioManager->playSound("Sounds/amongus-roundstart.wav");
+	if (InputManager::KeyPress('3'))
+		audioManager->playSound("Sounds/metal-pipe.wav");
+	if (InputManager::KeyPress('4'))
+		audioManager->playSound("Sounds/oof.wav");
+	if (InputManager::KeyPress('5'))
+		audioManager->playSound("Sounds/ping.wav");
+	if (InputManager::KeyPress('6'))
+		audioManager->playSound("Sounds/yippee-tbh.wav");
+	if (InputManager::KeyPress('7'))
+		audioManager->playSound("Sounds/yahoo.wav");
+	if (InputManager::KeyPress('8'))
+		audioManager->playSound("Sounds/baka-mitai.wav");
 }

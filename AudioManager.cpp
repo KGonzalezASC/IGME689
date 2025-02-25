@@ -160,22 +160,6 @@ bool AudioManager::init()
 void AudioManager::update_audio(float dt)
 {
 	// Until update_audio has anything better to do, have it play funny sounds when different keys are pressed
-	if (Input::KeyPress('1')) 
-		playSound("Sounds/vine-boom.wav");
-	if (Input::KeyPress('2'))
-		playSound("Sounds/amongus-roundstart.wav");
-	if (Input::KeyPress('3'))
-		playSound("Sounds/metal-pipe.wav");
-	if (Input::KeyPress('4'))
-		playSound("Sounds/oof.wav");
-	if (Input::KeyPress('5'))
-		playSound("Sounds/ping.wav");
-	if (Input::KeyPress('6'))
-		playSound("Sounds/yippee-tbh.wav");
-	if (Input::KeyPress('7'))
-		playSound("Sounds/yahoo.wav");
-	if (Input::KeyPress('8'))
-		playSound("Sounds/baka-mitai.wav");
 }
 
 void AudioManager::cache_sound(Sound* sound)
