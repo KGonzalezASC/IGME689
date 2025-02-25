@@ -7,15 +7,30 @@ using namespace DirectX;
 Vertex vertex;
 int count = 0; // count vertices
 
+//---------------------------------------
+	// - ECS Data stuff in an attempt at animation
+	//---------------------------------------
+DirectX::XMFLOAT4X4 temp_wm;
+MeshEntityData meshEntity = MeshEntityData(temp_wm, DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
+std::map<std::string, UINT> mBoneMappingTemp;
+std::vector<BoneInfo> mBoneInfo;
+DirectX::XMMATRIX temp_NodeTransform = DirectX::XMMatrixIdentity();
+
+MeshBoneData* meshBoneData = new MeshBoneData(mBoneMappingTemp, mBoneInfo, UINT(0), temp_NodeTransform);
+
 //ctor
 Mesh::Mesh(const char* name, Vertex* vertexBuffer, int vertexCount, unsigned int* indexBuffer, int indexCount): name(name)
 {
+	DirectX::XMStoreFloat4x4(&temp_wm, DirectX::XMMatrixIdentity());
 	initBuffers(vertexBuffer, vertexCount, indexBuffer, indexCount);
 }
 
 //obj ctor
 Mesh::Mesh(const char* name, const std::wstring& inputFile, bool isFBX) : name(name)
 {
+	
+
+
 	if (isFBX)
 	{
 		LoadFBX(inputFile);
@@ -240,10 +255,6 @@ Mesh::Mesh(const char* name, const std::wstring& inputFile, bool isFBX) : name(n
 		//    sophisticated model loading library like TinyOBJLoader or The Open Asset Importer Library
 	}
 }
-//Mesh::Mesh(const char* name, const std::wstring& objFile) : name(name)
-//{
-//	
-//}
 
 
 void Mesh::LoadFBX(const std::wstring& filePath)
@@ -257,18 +268,7 @@ void Mesh::LoadFBX(const std::wstring& filePath)
 		return;
 	}
 
-	//---------------------------------------
-	// - ECS Data stuff in an attempt at animation
-	//---------------------------------------
-	/*entt::entity meshEntity = m_rendererRegistry.create();
-	m_rendererRegistry.emplace<MeshRenderVars>(meshEntity, nullptr, nullptr, 0);*/
-	DirectX::XMFLOAT4X4 temp_wm;
-	DirectX::XMStoreFloat4x4(&temp_wm, DirectX::XMMatrixIdentity());
-	MeshEntityData meshEntity = MeshEntityData(temp_wm, DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
-	std::map<std::string, UINT> mBoneMappingTemp;
-	std::vector<BoneInfo> mBoneInfo;
-	DirectX::XMMATRIX temp_NodeTransform = DirectX::XMMatrixIdentity();
-	MeshBoneData meshBoneData = MeshBoneData(mBoneMappingTemp, mBoneInfo, UINT(0), temp_NodeTransform);
+	
 
 	// Process the scene to extract mesh and animation data
 	// This is a simplified example, you need to handle bones, weights, and animations properly
@@ -315,15 +315,15 @@ void Mesh::LoadFBX(const std::wstring& filePath)
 
 
 		// Load bone data
-		LoadBones(mesh, &Bones, &meshBoneData);
+		LoadBones(mesh, &Bones /*, &meshBoneData*/);
 
 		aiMatrix4x4 offset = scene->mRootNode->mTransformation;
-		meshBoneData.GlobalInverseTransform = DirectX::XMMATRIX(offset.a1, offset.a2, offset.a3, offset.a4,
+		meshBoneData->GlobalInverseTransform = DirectX::XMMATRIX(offset.a1, offset.a2, offset.a3, offset.a4,
 			offset.b1, offset.b2, offset.b3, offset.b4,
 			offset.c1, offset.c2, offset.c3, offset.c4,
 			offset.d1, offset.d2, offset.d3, offset.d4);
 
-		meshBoneData.GlobalInverseTransform = DirectX::XMMatrixInverse(nullptr, meshBoneData.GlobalInverseTransform);
+		meshBoneData->GlobalInverseTransform = DirectX::XMMatrixInverse(nullptr, meshBoneData->GlobalInverseTransform);
 
 		for (unsigned int k = 0; k < Bones.size(); k++)
 		{
@@ -350,58 +350,11 @@ void Mesh::LoadFBX(const std::wstring& filePath)
 		meshEntity.scale = DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f);
 	}
 
-	//aiMesh* mesh = scene->mMeshes[0]; // Assuming a single mesh
 
-	
-	//ExtractBoneWeightsForVertices(mesh);
-
-	// Process animation data
-	//if (scene->mNumAnimations > 0)
-	//{
-	//	aiAnimation* animation = scene->mAnimations[0]; // Assuming one animation for now
-
-	//	for (unsigned int i = 0; i < animation->mNumChannels; i++)
-	//	{
-	//		aiNodeAnim* nodeAnim = animation->mChannels[i];
-	//		std::string nodeName = nodeAnim->mNodeName.C_Str();
-
-	//		if (mBoneMapping.find(nodeName) == mBoneMapping.end())
-	//			continue;
-
-	//		unsigned int boneIndex = mBoneMapping[nodeName];
-	//		BoneInfo& boneInfo = mBoneInfo[boneIndex];
-
-	//		// Store keyframe transformations
-	//		for (unsigned int j = 0; j < nodeAnim->mNumPositionKeys; j++)
-	//		{
-	//			aiVector3D position = nodeAnim->mPositionKeys[j].mValue;
-	//			aiQuaternion rotation = nodeAnim->mRotationKeys[j].mValue;
-	//			aiVector3D scale = nodeAnim->mScalingKeys[j].mValue;
-
-	//			DirectX::XMMATRIX translationM = DirectX::XMMatrixTranslation(position.x, position.y, position.z);
-	//			DirectX::XMMATRIX rotationM = DirectX::XMMatrixRotationQuaternion(DirectX::XMVectorSet(rotation.x, rotation.y, rotation.z, rotation.w));
-	//			DirectX::XMMATRIX scaleM = DirectX::XMMatrixScaling(scale.x, scale.y, scale.z);
-
-	//			boneInfo.FinalTransformation = scaleM * rotationM * translationM;
-	//		}
-	//	}
-	//}
 	initBuffers(verts.data(), verts.size(), indices.data(), indices.size());
 
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 //dtor
@@ -448,7 +401,7 @@ void Mesh::initBuffers(Vertex* vertices, size_t numVerts, unsigned int* indices,
 	this->m_indicesCount = (UINT)numIndices;
 }
 
-void Mesh::VertexBoneData::AddBoneData(UINT BoneID, float Weight)
+void VertexBoneData::AddBoneData(UINT BoneID, float Weight)
 {
 
 	for (UINT i = 0; i < sizeof(IDs); i++)
@@ -520,7 +473,7 @@ void Mesh::VertexBoneData::AddBoneData(UINT BoneID, float Weight)
 // - Store ID and Weight for each Bone and later attach to components of the system
 // - Number of Bones attached to each vertex may vary with each mesh but for now it is 1 single mesh 
 // ----------------------------------------------------------------------------------------------------
-void Mesh::LoadBones(aiMesh* mesh, std::vector<VertexBoneData>* BonesData, MeshBoneData* meshBoneData)
+void Mesh::LoadBones(aiMesh* mesh, std::vector<VertexBoneData>* BonesData/*, MeshBoneData* meshBoneData*/)
 {
 
 	BonesData->resize(mesh->mNumVertices);
@@ -564,7 +517,7 @@ void Mesh::LoadBones(aiMesh* mesh, std::vector<VertexBoneData>* BonesData, MeshB
 // Called for each mesh having mBoneMapping[index] but for now it is set to a single Transform 
 // passed to a single shader and could be improved by adding more shaders as part of ECS.
 // --------------------------------------------------------------------------------------------
-DirectX::XMMATRIX Mesh::BoneTransform(float TimeInSeconds, std::vector<DirectX::XMFLOAT4X4>& Transforms, MeshBoneData* mesh_BoneData)
+DirectX::XMMATRIX Mesh::BoneTransform(float TimeInSeconds, std::vector<DirectX::XMFLOAT4X4>& Transforms/*, MeshBoneData* meshBoneData*/)
 {
 	DirectX::XMMATRIX Identity = DirectX::XMMatrixIdentity();
 
@@ -573,13 +526,13 @@ DirectX::XMMATRIX Mesh::BoneTransform(float TimeInSeconds, std::vector<DirectX::
 	float TimeInTicks = TimeInSeconds * TicksPerSecond;
 	float AnimationTime = fmod(TimeInTicks, scene->mAnimations[0]->mDuration);
 
-	ReadNodeHeirarchy(AnimationTime, scene->mRootNode, Identity, mesh_BoneData);
+	ReadNodeHeirarchy(AnimationTime, scene->mRootNode, Identity/*, meshBoneData*/);
 
-	Transforms.resize(mesh_BoneData->mNumBones);
+	Transforms.resize(meshBoneData->mNumBones);
 
-	for (UINT i = 0; i < mesh_BoneData->mNumBones; i++) {
+	for (UINT i = 0; i < meshBoneData->mNumBones; i++) {
 
-		DirectX::XMStoreFloat4x4(&Transforms[i], mesh_BoneData->mBoneInfo[i].FinalTransformation);
+		DirectX::XMStoreFloat4x4(&Transforms[i], meshBoneData->mBoneInfo[i].FinalTransformation);
 	}
 
 	return Identity;
@@ -590,7 +543,7 @@ DirectX::XMMATRIX Mesh::BoneTransform(float TimeInSeconds, std::vector<DirectX::
 // - All The calculation upto this point is based on Assimp matrices coordination and converstion of S * R * T
 //   needs Transpose to match DirectX Left Hand Coordinate system
 // ---------------------------------------------------------------------------------------------------------------
-void Mesh::ReadNodeHeirarchy(float AnimationTime, const aiNode* pNode, const DirectX::XMMATRIX& ParentTransform, MeshBoneData* mesh_BoneData)
+void Mesh::ReadNodeHeirarchy(float AnimationTime, const aiNode* pNode, const DirectX::XMMATRIX& ParentTransform/*, MeshBoneData* meshBoneData*/)
 {
 	std::string NodeName(pNode->mName.data);
 	aiAnimation* pAnim = scene->mAnimations[0];
@@ -618,14 +571,14 @@ void Mesh::ReadNodeHeirarchy(float AnimationTime, const aiNode* pNode, const Dir
 
 	DirectX::XMMATRIX GlobalTransformation = ParentTransform * NodeTransformation;
 
-	if (mesh_BoneData->mBoneMapping.find(NodeName) != mesh_BoneData->mBoneMapping.end()) {
-		UINT BoneIndex = mesh_BoneData->mBoneMapping[NodeName];
-		mesh_BoneData->mBoneInfo[BoneIndex].FinalTransformation = mesh_BoneData->GlobalInverseTransform * GlobalTransformation * mesh_BoneData->mBoneInfo[BoneIndex].BoneOffset;
+	if (meshBoneData->mBoneMapping.find(NodeName) != meshBoneData->mBoneMapping.end()) {
+		UINT BoneIndex = meshBoneData->mBoneMapping[NodeName];
+		meshBoneData->mBoneInfo[BoneIndex].FinalTransformation = meshBoneData->GlobalInverseTransform * GlobalTransformation * meshBoneData->mBoneInfo[BoneIndex].BoneOffset;
 	}
 
 	for (UINT i = 0; i < pNode->mNumChildren; ++i) {
 
-		ReadNodeHeirarchy(AnimationTime, pNode->mChildren[i], GlobalTransformation, mesh_BoneData);
+		ReadNodeHeirarchy(AnimationTime, pNode->mChildren[i], GlobalTransformation/*, meshBoneData*/);
 	}
 
 }

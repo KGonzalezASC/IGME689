@@ -247,7 +247,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	for (auto& entity : entities)
 	{
 		//set color tint
-		//entity->UpdateAnimation(deltaTime);
+		entity->UpdateAnimation(deltaTime);
 		entity->Draw(cameras[activeCamera]);
 	}
 

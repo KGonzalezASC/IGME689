@@ -20,7 +20,7 @@ class GameObject
 	 void SetMaterial(std::shared_ptr<Material> material);
 	 void SetMesh(std::shared_ptr<Mesh> mesh);
 	 void Draw(std::shared_ptr<Camera> camera);
-	 //void UpdateAnimation(float deltaTime);
+	 void UpdateAnimation(float deltaTime);
 
    private:
 	std::shared_ptr<Mesh> mesh;
