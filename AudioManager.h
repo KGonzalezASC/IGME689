@@ -36,7 +36,7 @@ constexpr double CYCLESPERSEC = 220.0;                                          
 constexpr double VOLUME = 0.5;                                                           // 50% volume. Potentially better practice to set this value in the game loop?
 constexpr WORD AUDIOBUFFERSIZEINCYCLES = 10;                                             // 10 cycles per audio buffer.
 constexpr double PI = 3.14159265358979323846;
-constexpr WORD NUM_CHANNELS = 2;														 // 1 audio channel to test.
+constexpr WORD NUM_CHANNELS = 2;														 // 2 audio channel to test.
 
 // Calculated constants
 constexpr DWORD SAMPLESPERCYCLE = (DWORD)(SAMPLESPERSEC / CYCLESPERSEC);                 // 200 samples per cycle.
@@ -45,6 +45,7 @@ constexpr UINT32 AUDIOBUFFERSIZEINBYTES = AUDIOBUFFERSIZEINSAMPLES * BITSPERSSAM
 
 // Other sound-related constants
 constexpr WORD MAX_CONCURRENT_SOUNDS = 16;												 // 16 sounds can play at once.
+constexpr WORD MAX_CACHED_SOUNDS = 16;													 // 16 sounds can play at once.
 static constexpr int SOUNDS_BUFFER_SIZE = 1024000000;                                    // 128 MB sound buffer size. This is needed because sounds (music especially) can have very large file sizes.
 constexpr WORD MAX_SOUND_PATH_LENGTH = 256;												 // Maximum sound path size of 256 characters.
 
@@ -64,6 +65,11 @@ public:
 	{
 		return &buffer;
 	}
+	Sound()
+	{
+		fileName = "";
+		buffer = { 0 };
+	}
 	Sound(std::string fileName, XAUDIO2_BUFFER buffer)
 	{
 		this->fileName = fileName;
@@ -72,9 +78,22 @@ public:
 	}
 	~Sound()
 	{
+		//delete buffer.pAudioData;
+		//buffer.pAudioData = nullptr;
+		//buffer.pContext = nullptr;
+	}
+	void FreeSoundData()
+	{
 		delete buffer.pAudioData;
 		buffer.pAudioData = nullptr;
 		buffer.pContext = nullptr;
+	}
+	Sound(const Sound& other)
+	{
+		FreeSoundData();
+		fileName = other.fileName;
+		buffer = other.buffer;
+		buffer.pContext = this;
 	}
 };
 
@@ -96,7 +115,7 @@ public:
 	// I just don't like seeing really big memory leaks
 	void OnBufferEnd(void* pBufferContext) noexcept
 	{
-		delete (Sound*)pBufferContext;
+		//delete (Sound*)pBufferContext;
 	}
 
 	// Methods that need to be defined but not scripted, could do cool stuff with them later
@@ -114,10 +133,12 @@ public:
 	~AudioManager();
 	void playSound(const char filePath[MAX_SOUND_PATH_LENGTH]);
 	Sound* create_sound(const char filePath[MAX_SOUND_PATH_LENGTH]);
+	void cache_sound(Sound* sound);
 	void update_audio(float dt);
 
 private:
 	static XAudioVoice voiceArr[MAX_CONCURRENT_SOUNDS];
+	Sound* cachedSounds[MAX_CACHED_SOUNDS];
 	IXAudio2* xAudio2;
 	bool init();
 	HRESULT FindChunk(HANDLE hFile, DWORD fourcc, DWORD& dwChunkSize, DWORD& dwChunkDataPosition);
