@@ -164,19 +164,41 @@ void AudioManager::update_audio(float dt)
 
 void AudioManager::cache_sound(Sound* sound)
 {
+	int openCacheIdx = -1;
 	// Look for an open sound in the cache
 	for (int i = 0; i < MAX_CACHED_SOUNDS; i++)
 	{
 		Sound* currentSound = cachedSounds[i];
+
+		// If the current spot in the cache is nullptr, that spot is guaranteed to be open.
+		// Add the sound to the cache and return instantly
 		if (currentSound == nullptr)
 		{
 			cachedSounds[i] = sound;
+			cachedSounds[i]->inCache = true;
 			return;
 		}
+
+		// If the current sound in the cache isn't being played by any voices, it's idle.
+		// Set openCacheIndex to that value, but continue the loop in case an empty spot 
+		// in the cache is found.
+		if (openCacheIdx < 0 && currentSound->numOfPlayingVoices == 0)
+			openCacheIdx = i;
+	}
+
+	// If an idle sound is in the cache, overwrite it with the provided sound.
+	if (openCacheIdx >= 0)
+	{
+		//std::cout << "Overwrote " << cachedSounds[openCacheIdx]->fileName << " at idx " << openCacheIdx << " with " << sound->fileName << std::endl;
+		cachedSounds[openCacheIdx]->FreeSoundData();
+		delete cachedSounds[openCacheIdx];
+		cachedSounds[openCacheIdx] = sound;
+		cachedSounds[openCacheIdx]->inCache = true;
 	}
 
 	// If there are no open spots in the cache, print a message.
-	std::cout << "The cache is full. This sound will not be cached." << std::endl;
+	else
+		std::cout << "The cache is full. This sound will not be cached." << std::endl;
 }
 
 HRESULT AudioManager::FindChunk(HANDLE hFile, DWORD fourcc, DWORD& dwChunkSize, DWORD& dwChunkDataPosition)
