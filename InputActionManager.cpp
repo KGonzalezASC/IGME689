@@ -1,6 +1,7 @@
 #include "InputActionManager.h"
 #include "XInputManager.h"
 #include <iostream>
+#include <vector>
 
 namespace InputActionManager
 {
@@ -157,7 +158,7 @@ namespace InputActionManager
 
 	void InputActionManager::CheckActionBindings()
 	{
-		
+		std::vector<InputBindings> conBinds;
 
 		// Loop through all the bindings in actionBindings
 		for (auto& binding : actionBindings)
@@ -173,22 +174,14 @@ namespace InputActionManager
 			}
 			else if (type == InputBindingType::Mouse)
 			{
+				if (input >= 74 && input <= 76)
+				{
 
+				}
 			}
 			else if (type == InputBindingType::XController)
 			{
-				if (input >= 79 && input <= 92)
-				{
-					inputType = XInputManager::Instance->CheckButtonState(
-						bindings[input].second, 0); 
-				}
-				else if (input >= 93 && input <= 96)
-				{
-					inputValue = XInputManager::Instance->GetValueFromController(
-						input, 0);
-
-					inputType = InputType::Value;
-				}
+				conBinds.push_back(input);
 			}
 
 			InputData data = {};
@@ -207,6 +200,47 @@ namespace InputActionManager
 				}
 			}
 		}
+
+		for (InputBindings conbind : conBinds)
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				InputBindingType type = bindings[conbind].first;
+				InputType inputType = InputType::Up;
+				std::any inputValue = std::any();
+				
+
+				if (conbind >= 79 && conbind <= 92)
+				{
+					inputType = XInputManager::Instance->CheckButtonState(
+						bindings[conbind].second, i);
+				}
+				else if (conbind >= 93 && conbind <= 96)
+				{
+					inputValue = XInputManager::Instance->GetValueFromController(
+						conbind, i);
+
+					inputType = InputType::Value;
+				}
+
+				InputData data = {};
+				data.inputType = inputType;
+				data.key = conbind;
+				data.controllerIndex = i;
+				data.value = InputValue(inputValue);
+
+				// Loop through all the actions associated with this binding
+				for (auto& actionName : actionBindings[conbind])
+				{
+					InputAction& action = actions.at(actionName);
+					for (auto& event : action.OnTrigger)
+					{
+						event(data);
+					}
+				}
+			}
+		}
+		
 	}
 
 	InputType InputActionManager::ProcessKey(uint16_t key)

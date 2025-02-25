@@ -38,8 +38,7 @@ void Game::Initialize()
 	{
 			if (data.inputType == InputActionManager::InputType::Value)
 			{
-				/*lights[0].Intensity = (int)data.value.GetValue<BYTE>().value() * 2;
-				lights[1].Intensity = (int)data.value.GetValue<BYTE>().value() * 2;*/
+				
 			}
 	});
 

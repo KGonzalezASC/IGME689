@@ -3,6 +3,8 @@
 #include "InputActionManager.h"
 #include <Xinput.h>
 #include <any>
+#include <DirectXMath.h>
+using namespace DirectX;
 
 #define NOT_A_CONTROLLER -1
 #define CONTROLLER_1 0

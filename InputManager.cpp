@@ -45,18 +45,17 @@ void InputManager::Initialize(HWND windowHandle)
 
 	InputActionManager::CreateAction(L"Value");
 
-	InputActionManager::AssignBindingToAction(L"Value", InputBindings::XControllerLeftTrigger);
-	InputActionManager::AssignBindingToAction(L"Value", InputBindings::XControllerRightTrigger);
+	InputActionManager::AssignBindingToAction(L"Value", InputBindings::XControllerRightStick);
+	//InputActionManager::AssignBindingToAction(L"Value", InputBindings::XControllerRightTrigger);
 	//InputActionManager::AssignBindingToAction(L"Test", InputBindings::XControllerDPadUp);
 
 	InputActionManager::GetAction(L"Value").OnTrigger.push_back([](InputActionManager::InputData data) 
 	{ 
 		if (data.inputType == InputActionManager::InputType::Value)
 		{
-			if ((int)data.value.GetValue<BYTE>().value() != 0)
+			if (data.controllerIndex == CONTROLLER_2)
 			{
-				std::cout << "Value Pressed: " << data.key << std::endl;
-				std::cout << (int)data.value.GetValue<BYTE>().value() << std::endl;
+				
 			}
 		}
 	});
@@ -71,7 +70,7 @@ void InputManager::Initialize(HWND windowHandle)
 	{
 		if (data.inputType == InputActionManager::InputType::Pressed)
 		{
-			std::cout << "Key Pressed: " << data.key << std::endl;
+			std::cout << "Key Pressed: " << data.controllerIndex << std::endl;
 		}
 	});
 }

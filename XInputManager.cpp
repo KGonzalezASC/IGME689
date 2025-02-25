@@ -1,8 +1,6 @@
 #include "XInputManager.h"
-#include <DirectXMath.h>
-#include <iostream>
 
-using namespace DirectX;
+#include <iostream>
 
 XInputManager * XInputManager::Instance = nullptr;
 
@@ -88,11 +86,11 @@ std::any XInputManager::GetValueFromController(InputBindings value, int index)
         case InputBindings::XControllerLeftStick:
             XMFLOAT2 leftValue({ (float)controllerStates[index].Gamepad.sThumbLX,
                 (float)controllerStates[index].Gamepad.sThumbLY });
-            return value;
+            return leftValue;
         case InputBindings::XControllerRightStick:
             XMFLOAT2 rightValue({ (float)controllerStates[index].Gamepad.sThumbRX,
                 (float)controllerStates[index].Gamepad.sThumbRY });
-			return value;
+			return rightValue;
     }
 }
 
