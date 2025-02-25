@@ -45,9 +45,9 @@ class Mesh
 
     //std::vector<DirectX::XMFLOAT4X4> mFinalBoneTransforms;
 
-    void LoadFBX(const std::wstring& filePath);
-    void ProcessBoneHierarchy(aiNode* node, DirectX::XMMATRIX parentTransform);
-    void ExtractBoneWeightsForVertices(aiMesh* mesh);
+    //void LoadFBX(const std::wstring& filePath);
+    //void ProcessBoneHierarchy(aiNode* node, DirectX::XMMATRIX parentTransform);
+    //void ExtractBoneWeightsForVertices(aiMesh* mesh);
 
     //copy ctor
 	//Mesh(const Mesh& mesh);
@@ -89,6 +89,30 @@ class Mesh
          DirectX::XMFLOAT3 rotation;
          DirectX::XMFLOAT3 scale;
      };
+
+     DirectX::XMMATRIX BoneTransform(float TimeInSeconds, std::vector<DirectX::XMFLOAT4X4>& Transforms, MeshBoneData* mesh_BoneData);
+     void ReadNodeHeirarchy(float AnimationTime, const aiNode* pNode, const DirectX::XMMATRIX& ParentTransform, MeshBoneData* mesh_BoneData);
+     const aiNodeAnim* FindNodeAnim(const aiAnimation* pAnimation, const std::string NodeName);
+     void CalcInterpolatedPosition(aiVector3D& Out, float AnimationTime, const aiNodeAnim* pNodeAnim);
+     void CalcInterpolatedScaling(aiVector3D& Out, float AnimationTime, const aiNodeAnim* pNodeAnim);
+     void CalcInterpolatedRotation(aiQuaternion& Out, float AnimationTime, const aiNodeAnim* pNodeAnim);
+     UINT FindPosition(float AnimationTime, const aiNodeAnim* pNodeAnim);
+     UINT FindRotation(float AnimationTime, const aiNodeAnim* pNodeAnim);
+     UINT FindScaling(float AnimationTime, const aiNodeAnim* pNodeAnim);
+
+     // ---------------------------------------------------------------
+     // - Iterate 'n' mesh entities.
+     // - Store vb, ib, and indices after reading from the obj file.
+     // - Could be improved with ASSIMP.
+     // ---------------------------------------------------------------
+     //void LoadMesh(const char* objFile, entt::registry& registry);
+
+     void LoadBones(aiMesh* mesh, std::vector<VertexBoneData>* BonesData, MeshBoneData* BoneData_ECS);
+
+     // Static because only visible to functions in other files, keep one copy.
+     static void Rotate(float x, float y, float z, DirectX::XMFLOAT3* rotation) { rotation->x += x;	rotation->y += y;	rotation->z += z; }
+     static void SetPosition(float x, float y, float z, DirectX::XMFLOAT3* position) { position->x = x;	position->y = y;	position->z = z; }
+
 	//mesh needs device and context to create buffers
     Mesh(const char* name, Vertex* vertexBuffer, int, unsigned int* indexBuffer, int);
     //obj ctor
@@ -108,9 +132,12 @@ class Mesh
 
     //animation method
     //const std::vector<DirectX::XMFLOAT4X4>& GetFinalBoneTransforms() const { return mFinalBoneTransforms; }
-    void LoadBones(aiMesh* mesh, std::vector<VertexBoneData>* BonesData, MeshBoneData* BoneData_ECS);
+    //void LoadBones(aiMesh* mesh, std::vector<VertexBoneData>* BonesData, MeshBoneData* BoneData_ECS);
 
     void Draw();
+
+    const aiScene* scene = 0;
+    Assimp::Importer importer;
 };
 
 

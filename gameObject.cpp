@@ -32,13 +32,13 @@ void GameObject::Draw(std::shared_ptr<Camera> camera)
 	mesh->Draw();
 }
 
-void GameObject::UpdateAnimation(float deltaTime)
-{
-	static float animationTime = 0.0f;
-	animationTime += deltaTime;
-
-	std::vector<DirectX::XMFLOAT4X4> transforms;
-	mesh->GetFinalBoneTransforms();
-
-	material->PrepareMaterial(transform, camera);
-}
+//void GameObject::UpdateAnimation(float deltaTime)
+//{
+//	static float animationTime = 0.0f;
+//	animationTime += deltaTime;
+//
+//	std::vector<DirectX::XMFLOAT4X4> transforms;
+//	mesh->GetFinalBoneTransforms();
+//
+//	material->PrepareMaterial(transform, camera);
+//}
