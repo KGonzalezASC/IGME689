@@ -126,7 +126,7 @@ public:
 	void OnBufferStart(void* pBufferContext) noexcept 
 	{
 		((Sound*)pBufferContext)->numOfPlayingVoices++;
-		std::cout << ((Sound*)pBufferContext)->numOfPlayingVoices << std::endl;
+		//std::cout << ((Sound*)pBufferContext)->numOfPlayingVoices << std::endl;
 	}
 
 	// When the buffer ends, increment the amount of voices playing this sound.
@@ -134,7 +134,13 @@ public:
 	void OnBufferEnd(void* pBufferContext) noexcept
 	{
 		((Sound*)pBufferContext)->numOfPlayingVoices--;
-		std::cout << ((Sound*)pBufferContext)->numOfPlayingVoices << std::endl;
+		//std::cout << ((Sound*)pBufferContext)->numOfPlayingVoices << std::endl;
+		if (!((Sound*)pBufferContext)->inCache)
+		{
+			std::cout << ((Sound*)pBufferContext)->fileName << " isn't in the cache. Deleting." << std::endl;
+			((Sound*)pBufferContext)->FreeSoundData();
+			delete ((Sound*)pBufferContext);
+		}
 	}
 
 	// Methods that need to be defined but not scripted, could do cool stuff with them later
