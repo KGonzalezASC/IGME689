@@ -15,6 +15,9 @@
 #include "ImGui/imgui_impl_dx11.h"
 #include "ImGui/imgui_impl_win32.h"
 
+
+#include "AudioManager.h"
+#include <iostream>
 #include "SharedBuffers.h"
 
 #include "InputManager.h"
@@ -42,6 +45,7 @@ private:
 	void CreateGeometry();
 	void updateUi(float deltaTime);
 
+
 	std::vector<std::shared_ptr<Camera>> cameras;
 	int activeCamera = 0;
 
@@ -65,12 +69,12 @@ private:
 	std::shared_ptr<SimplePixelShader> normalPixelShader;
 	std::shared_ptr<SimplePixelShader> customPixelShader;
 
-	
-
-
 	//ImGui
 	bool showDemoWindow = false;
 	float bgColor[4] = { 0.45f, 0.55f, 0.60f, 1.00f }; // Background color
 	float tintColor[4] = {1.0f, 1.0f, 1.0f, 1.0f}; // Tint color
+
+	// Audio
+	std::shared_ptr<AudioManager> audioManager;
 };
 

@@ -5,6 +5,7 @@
 #include "PathHelpers.h"
 #include "Window.h"
 #include "Camera.h"
+#include "AudioManager.h"
 #include <DirectXMath.h>
 
 // Needed for a helper function to load pre-compiled shader files
@@ -26,10 +27,7 @@ void Game::Initialize()
 	ImGui_ImplWin32_Init(Window::Handle());
 	ImGui_ImplDX11_Init(Graphics::Device.Get(), Graphics::Context11_1.Get());
 	LoadShaders();
-
-
-
-
+	
 	CreateGeometry(); //updating for A03
 	// Set initial graphics API state pipeline settings
 	{
@@ -52,6 +50,8 @@ void Game::Initialize()
 	std::shared_ptr<Camera> camera2 = std::make_shared<Camera>(Window::AspectRatio(), XMFLOAT3(0.5f, 0.0f, -15.0f), XM_PIDIV4, 0.01f, 1000.0f, 5.0f, 0.0055f);
 	camera2.get()->getTransform().moveRelative(0.5f, 0.0f, 0.0f);
 	cameras.push_back(camera2);
+
+	audioManager = std::make_shared<AudioManager>();
 }
 
 
@@ -148,8 +148,6 @@ void Game::CreateGeometry()
 				XMVector3Normalize(XMLoadFloat3(&lights[i].Direction))
 			);
 }
-
-
 
 
 void Game::OnResize()
@@ -272,6 +270,10 @@ void Game::Update(float deltaTime, float totalTime)
 	//entities[0]->GetTransform()->Rotate(0, 0, deltaTime);
 	cameras[activeCamera]->Update(deltaTime);
 	updateUi(deltaTime);
+	audioManager->update_audio(deltaTime);
+
+	// To play a sound, call audioManager->playSound("filepath"). For example:
+	//audioManager->playSound("Sounds/vine-thud.wav");
 }
 
 
@@ -328,6 +330,3 @@ void Game::Draw(float deltaTime, float totalTime)
 			Graphics::DepthBufferDSV.Get());
 	}
 }
-
-
-

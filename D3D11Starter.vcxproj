@@ -157,6 +157,7 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AudioManager.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="gameObject.cpp" />
@@ -182,6 +183,7 @@
     <ClCompile Include="XInputManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AudioManager.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="gameObject.h" />
