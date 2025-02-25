@@ -59,14 +59,26 @@ private:
 	bool inCache;
 
 public:
+	/// <summary>
+	/// Returns the file name of the sound.
+	/// </summary>
+	/// <returns>The file name of the sound.</returns>
 	std::string GetFileName()
 	{
 		return fileName;
 	}
+	/// <summary>
+	/// Returns a pointer to the sound's XAUDIO2_BUFFER.
+	/// </summary>
+	/// <returns>A pointer to the sound's XAUDIO2_BUFFER.</returns>
 	XAUDIO2_BUFFER* GetBuffer()
 	{
 		return &buffer;
 	}
+
+	/// <summary>
+	/// Default constructor, don't use. When creating a sound, use the other constructor.
+	/// </summary>
 	Sound()
 	{
 		fileName = "";
@@ -74,6 +86,12 @@ public:
 		numOfPlayingVoices = 0;
 		inCache = false;
 	}
+	/// <summary>
+	/// Creates a Sound object, storing the corresponding file path
+	/// and XAUDIO2_BUFFER struct.
+	/// </summary>
+	/// <param name="fileName">The sound's file path.</param>
+	/// <param name="buffer">The sound's XAUDIO2_BUFFER struct.</param>
 	Sound(std::string fileName, XAUDIO2_BUFFER buffer)
 	{
 		this->fileName = fileName;
@@ -82,18 +100,28 @@ public:
 		numOfPlayingVoices = 0;
 		inCache = false;
 	}
+	/// <summary>
+	/// Deletes the sound. The FreeSoundData() struct must be called
+	/// before deleting the sound object.
+	/// </summary>
 	~Sound()
 	{
-		//delete buffer.pAudioData;
-		//buffer.pAudioData = nullptr;
-		//buffer.pContext = nullptr;
+
 	}
+	/// <summary>
+	/// Frees up the memory used by the sound buffer. Must be called
+	/// before deleting the sound struct.
+	/// </summary>
 	void FreeSoundData()
 	{
 		delete buffer.pAudioData;
 		buffer.pAudioData = nullptr;
 		buffer.pContext = nullptr;
 	}
+	/// <summary>
+	/// Copy constructor.
+	/// </summary>
+	/// <param name="other">The other Sound object.</param>
 	Sound(const Sound& other)
 	{
 		FreeSoundData();
