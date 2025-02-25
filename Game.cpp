@@ -30,8 +30,7 @@ void Game::Initialize()
 
 
 	//TODO: REPLACE WITH PBR MATERIALS (i.e remove the tint and or make accomodations for both in PS)
-	std::shared_ptr<Material> redMaterial = std::make_shared<Material>("Red Solid", pixelShader, vertexShader, XMFLOAT3(1.0f, 0.0f, 0.0f), 0.5);
-	materials.insert(materials.end(), { redMaterial});
+	redMaterial = std::make_shared<Material>("Red Solid", pixelShader, vertexShader, XMFLOAT3(1.0f, 0.0f, 0.0f), 0.5);
 
 	std::shared_ptr<Material> orangeMaterial = std::make_shared<Material>("Orange Solid", pixelShader, vertexShader, XMFLOAT3(1.0f, 165.f/255.f, 0.0f), 0.5);
 	materials.insert(materials.end(), { orangeMaterial });
@@ -104,10 +103,6 @@ void Game::CreateGeometry()
 
 	std::shared_ptr<Mesh> sphere = std::make_shared<Mesh>("sphere", FixPath(L"../../Assets/Models/sphere.obj").c_str());
 	meshes.push_back(sphere);
-
-	// Create a material for the mesh
-	std::shared_ptr<Material> redMaterial = std::make_shared<Material>("Red Solid", pixelShader, vertexShader, XMFLOAT3(1.0f, 0.0f, 0.0f), 0.5);
-	materials.push_back(redMaterial);
 
 	// Create a single GameObject for the mesh
 	std::shared_ptr<GameObject> cubeObject = std::make_shared<GameObject>(cube, redMaterial);
@@ -308,7 +303,8 @@ void Game::Update(float deltaTime, float totalTime)
 	{
 		XMFLOAT3 pos = cameras[0]->getTransform().getPosition();
 		XMFLOAT3 forward = cameras[0]->getTransform().getForward();
-		AllHitCollisionCollector<RayCastBodyCollector> collector = physicsManager->JoltRayCast(Vec3(pos.x, pos.y, pos.z), Vec3Arg(forward.x, forward.y, forward.z),100);
+
+		AllHitCollisionCollector<RayCastBodyCollector> collector = physicsManager->JoltRayCast(Vec3(pos.x, pos.y, pos.z), Vec3Arg(forward.x, forward.y, forward.z), 100);
 
 		bool hasHit = collector.HadHit();
 
@@ -318,7 +314,7 @@ void Game::Update(float deltaTime, float totalTime)
 			{
 				if (bodyObjects.contains(hitBody.mBodyID))
 				{
-					bodyObjects[hitBody.mBodyID]->SetMaterial(materials[0]);
+					bodyObjects[hitBody.mBodyID]->SetMaterial(redMaterial);
 				}				
 			}
 		}

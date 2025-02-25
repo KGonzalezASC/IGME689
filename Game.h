@@ -50,6 +50,8 @@ private:
 	std::vector<std::shared_ptr<Material>> materials;
 	std::vector<Light> lights;
 
+	std::shared_ptr<Material> redMaterial;
+
 	//lighting
 	DirectX::XMFLOAT3 ambientColor = { 0.1314f, 0.1977f, 0.2768f };
 

@@ -25,6 +25,7 @@
 #include <Jolt/Physics/Collision/ShapeCast.h>
 #include <Jolt/Physics/Collision/RayCast.h>
 #include <Jolt/Physics/Collision/CastResult.h>
+#include <Jolt/Geometry/OrientedBox.h>
 
 // STL includes
 #include <iostream>
@@ -230,7 +231,7 @@ public:
 	BodyID CreatePhysicsCubeBody(RVec3 position, Vec3 size);
 	void AddBodyVelocity(BodyID body, Vec3 velocity);
 	AllHitCollisionCollector<RayCastBodyCollector>  JoltRayCast(Vec3::ArgType origin, Vec3Arg direction, float length);
-	bool JoltShapeCast(Vec3::ArgType origin, Vec3Arg direction, float length);
+	AllHitCollisionCollector<CollideShapeBodyCollector> JoltShapeCast(Vec3Arg min, Vec3Arg max, Vec3Arg direction);
 
 	BodyInterface* body_interface;
 private:

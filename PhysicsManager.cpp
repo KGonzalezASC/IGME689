@@ -159,3 +159,16 @@ AllHitCollisionCollector<RayCastBodyCollector> PhysicsManager::JoltRayCast(Vec3:
 	
 	return collector;
 }
+
+AllHitCollisionCollector<CollideShapeBodyCollector> PhysicsManager::JoltShapeCast(Vec3Arg min, Vec3Arg max, Vec3Arg direction)
+{
+	AABox box = AABox(max, min);
+	Mat44Arg matrix = Mat44Arg(Vec4Arg(1, 1, 1, 1));
+	OrientedBox orientedBox{ matrix ,direction};
+
+	AllHitCollisionCollector<CollideShapeBodyCollector> collector;
+
+	physics_system.GetBroadPhaseQuery().CollideOrientedBox(orientedBox, collector, BroadPhaseLayerFilter(), ObjectLayerFilter());
+
+	return collector;
+}
