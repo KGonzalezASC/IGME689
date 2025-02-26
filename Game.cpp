@@ -1,10 +1,11 @@
 #include "Game.h"
 #include "Graphics.h"
 #include "Vertex.h"
-#include "Input.h"
+#include "InputManager.h"
 #include "PathHelpers.h"
 #include "Window.h"
 #include "Camera.h"
+#include "AudioManager.h"
 #include <DirectXMath.h>
 
 // Needed for a helper function to load pre-compiled shader files
@@ -52,11 +53,20 @@ void Game::Initialize()
 	physicsManager->AddBodyVelocity(sphere1, Vec3(0.0f, -5.0f, 0.0f));
 	sphere2 = physicsManager->CreatePhysicsSphereBody(RVec3(0.1_r, 0.0_r, 0.1_r),1);
 
+	
 	CreateGeometry(); //updating for A03
 	// Set initial graphics API state pipeline settings
 	{
 		Graphics::Context11_1->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	}
+
+	InputActionManager::GetAction(L"Value").OnTrigger.push_back([=](InputActionManager::InputData data)
+	{
+			if (data.inputType == InputActionManager::InputType::Value)
+			{
+				
+			}
+	});
 
 	//camera basic setup //TODO: CAMERA NEEDS IMPROVED CONTROLS and bug fix so we can set proper looking at position instead of directly at mouse pos.
 	std::shared_ptr<Camera> camera = std::make_shared<Camera>(Window::AspectRatio(), XMFLOAT3(0.0f, 0.0f, -15.0f), XM_PIDIV4, 0.01f, 1000.0f, 5.0f, 0.0055f);
@@ -65,6 +75,8 @@ void Game::Initialize()
 	std::shared_ptr<Camera> camera2 = std::make_shared<Camera>(Window::AspectRatio(), XMFLOAT3(0.5f, 0.0f, -15.0f), XM_PIDIV4, 0.01f, 1000.0f, 5.0f, 0.0055f);
 	camera2.get()->getTransform().moveRelative(0.5f, 0.0f, 0.0f);
 	cameras.push_back(camera2);
+
+	audioManager = std::make_shared<AudioManager>();
 }
 
 // --------------------------------------------------------
@@ -162,6 +174,7 @@ void Game::CreateGeometry()
 			);
 }
 
+
 void Game::OnResize()
 {
 	for (auto& camera : cameras)
@@ -182,8 +195,8 @@ void Game:: updateUi(float deltaTime) {
 	ImGui::NewFrame();
 
 	//Determine the new input capture state which is what the user is currently doing
-	Input::SetKeyboardCapture(io.WantCaptureKeyboard); // make sure no ! flag on this..
-	Input::SetMouseCapture(io.WantCaptureMouse);
+	InputManager::SetKeyboardCapture(io.WantCaptureKeyboard); // make sure no ! flag on this..
+	InputManager::SetMouseCapture(io.WantCaptureMouse);
 
 	//create window, second param appears to save last window size?
 	ImGui::SetNextWindowSize(ImVec2(300, 200), ImGuiCond_FirstUseEver);
@@ -280,7 +293,7 @@ void Game:: updateUi(float deltaTime) {
 void Game::Update(float deltaTime, float totalTime)
 {
 
-	if (Input::KeyDown(VK_ESCAPE))
+	if (InputManager::KeyDown(VK_ESCAPE))
 		Window::Quit();
 	//updates should update worldmatrix of each entity which in turns means we have to 
 	//reallocate the constant buffer for world matrix because it is per object and it is dirty
@@ -338,6 +351,10 @@ void Game::Update(float deltaTime, float totalTime)
 			}
 		}
 	}
+	audioManager->update_audio(deltaTime);
+
+	// To play a sound, call audioManager->playSound("filepath"). For example:
+	//audioManager->playSound("Sounds/vine-thud.wav");
 }
 
 

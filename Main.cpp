@@ -5,7 +5,7 @@
 #include "Window.h"
 #include "Graphics.h"
 #include "Game.h"
-#include "Input.h"
+#include "InputManager.h"
 
 // Annonymous namespace to hold variables
 // only accessible in this file
@@ -70,7 +70,7 @@ int WINAPI WinMain(
 		WindowResizeCallback);
 	if (FAILED(windowResult))
 		return windowResult;
-
+	
 	// Initialize the graphics API and verify
 	HRESULT graphicsResult = Graphics::Initialize(
 		Window::Width(), 
@@ -81,7 +81,7 @@ int WINAPI WinMain(
 		return graphicsResult;
 
 	// Initalize the input system, which requires the window handle
-	Input::Initialize(Window::Handle());
+	InputManager::Initialize(Window::Handle());
 
 	// Now the game itself can be initialzied
 	game->Initialize();
@@ -126,14 +126,14 @@ int WINAPI WinMain(
 			Window::UpdateStats(totalTime);
 
 			// Input updating
-			Input::Update();
+			InputManager::Update();
 
 			// Update and draw
 			game->Update(deltaTime, totalTime);
 			game->Draw(deltaTime, totalTime);
 
 			// Notify Input system about end of frame
-			Input::EndOfFrame();
+			InputManager::EndOfFrame();
 
 #if defined(DEBUG) || defined(_DEBUG)
 			// Print any graphics debug messages that occurred this frame
@@ -144,7 +144,7 @@ int WINAPI WinMain(
 
 	// Clean up
 	delete game;
-	Input::ShutDown();
+	InputManager::ShutDown();
 	Graphics::ShutDown();
 	return (HRESULT)msg.wParam;
 }

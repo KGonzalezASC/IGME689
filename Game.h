@@ -16,7 +16,12 @@
 #include "ImGui/imgui_impl_win32.h"
 
 #include "PhysicsManager.h"
+
+#include "AudioManager.h"
+#include <iostream>
 #include "SharedBuffers.h"
+
+#include "InputManager.h"
 
 #define NUM_INSTANCES 10
 
@@ -40,6 +45,7 @@ private:
 	void LoadShaders();
 	void CreateGeometry();
 	void updateUi(float deltaTime);
+
 
 	std::vector<std::shared_ptr<Camera>> cameras;
 	int activeCamera = 0;
@@ -67,6 +73,9 @@ private:
 	bool showDemoWindow = false;
 	float bgColor[4] = { 0.45f, 0.55f, 0.60f, 1.00f }; // Background color
 	float tintColor[4] = {1.0f, 1.0f, 1.0f, 1.0f}; // Tint color
+
+	// Audio
+	std::shared_ptr<AudioManager> audioManager;
 
 	//--------------JoltPhysics----------------
 	PhysicsManager* physicsManager;
