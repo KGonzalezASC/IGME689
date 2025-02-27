@@ -59,7 +59,7 @@ VertexToPixel main(VertexShaderInput input)
     BoneTransform = BoneTransform + mul(input.Weights.y, BoneData[input.BoneIDs.y]);
     BoneTransform = BoneTransform + mul(input.Weights.z, BoneData[input.BoneIDs.z]);
     BoneTransform = BoneTransform + mul(input.Weights.w, BoneData[input.BoneIDs.w]);
-
+    
     matrix worldViewProj = mul(projection, mul(view,world));
     float4 PosL = mul(float4(input.localPosition, 1.0f), BoneTransform);
     output.screenPosition = mul(worldViewProj, PosL);
