@@ -26,4 +26,5 @@ class GameObject
 	std::shared_ptr<Mesh> mesh;
 	std::shared_ptr<Transform> transform;
 	std::shared_ptr<Material> material;
+	std::vector<DirectX::XMFLOAT4X4> boneTransforms;
 };

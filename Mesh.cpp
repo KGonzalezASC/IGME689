@@ -367,11 +367,11 @@ void Mesh::Draw(float deltaTime) {
 
 
 
-	static float animationTime = 0.0f;
+	/*static float animationTime = 0.0f;
 	animationTime += deltaTime;
 
 	std::vector<DirectX::XMFLOAT4X4> transforms;
-	BoneTransform(deltaTime, transforms);
+	BoneTransform(deltaTime, transforms);*/
 
 	//set buffers in the input assembler stage once per object
 	//like webgpu buffers are set per frame before drawIndexed

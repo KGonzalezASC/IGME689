@@ -1,6 +1,6 @@
 #include "gameObject.h"
 using namespace DirectX;
-
+#include <iostream>
 
 
 GameObject::GameObject(std::shared_ptr<Mesh> target, std::shared_ptr<Material> material): mesh(target), material(material)
@@ -29,6 +29,10 @@ void GameObject::SetMaterial(std::shared_ptr<Material> material)
 void GameObject::Draw(std::shared_ptr<Camera> camera, float deltaTime)
 {
 	material->PrepareMaterial(transform, camera);
+	UpdateAnimation(deltaTime);
+	material->GetVertexShader()->SetData("BoneData", &boneTransforms[0], sizeof(float) * 832);
+	material->GetVertexShader()->CopyAllBufferData();
+
 	mesh->Draw(deltaTime);
 }
 
@@ -37,6 +41,6 @@ void GameObject::UpdateAnimation(float deltaTime)
 	static float animationTime = 0.0f;
 	animationTime += deltaTime;
 
-	std::vector<DirectX::XMFLOAT4X4> transforms;
-	mesh->BoneTransform(deltaTime, transforms);
+	
+	mesh->BoneTransform(deltaTime, boneTransforms);
 }
