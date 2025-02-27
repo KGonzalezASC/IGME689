@@ -45,32 +45,38 @@ void InputManager::Initialize(HWND windowHandle)
 
 	InputActionManager::CreateAction(L"Value");
 
-	InputActionManager::AssignBindingToAction(L"Value", InputBindings::XControllerRightStick);
-	//InputActionManager::AssignBindingToAction(L"Value", InputBindings::XControllerRightTrigger);
-	//InputActionManager::AssignBindingToAction(L"Test", InputBindings::XControllerDPadUp);
+	InputActionManager::AssignBindingToAction(L"Value", InputBindings::MouseDelta);
 
 	InputActionManager::GetAction(L"Value").OnTrigger.push_back([](InputActionManager::InputData data) 
-	{ 
+	{
 		if (data.inputType == InputActionManager::InputType::Value)
 		{
-			if (data.controllerIndex == CONTROLLER_2)
-			{
-				
-			}
+			std::optional<XMFLOAT2> vector = data.value.GetValue<XMFLOAT2>();
+			if (vector.value().x != 0 || vector.value().y != 0)
+				std::cout << vector.value().x << " " << vector.value().y << std::endl;
 		}
 	});
 
 	InputActionManager::CreateAction(L"ButtonTest");
 
-	InputActionManager::AssignBindingToAction(L"ButtonTest", InputBindings::XControllerA);
-	InputActionManager::AssignBindingToAction(L"ButtonTest", InputBindings::Key2);
-	InputActionManager::AssignBindingToAction(L"ButtonTest", InputBindings::KeyO);
+	InputActionManager::AssignBindingToAction(L"ButtonTest", InputBindings::MouseWheelDown);
+	InputActionManager::AssignBindingToAction(L"ButtonTest", InputBindings::MouseWheelUp);
 
 	InputActionManager::GetAction(L"ButtonTest").OnTrigger.push_back([](InputActionManager::InputData data)
 	{
 		if (data.inputType == InputActionManager::InputType::Pressed)
 		{
-			std::cout << "Key Pressed: " << data.controllerIndex << std::endl;
+			std::cout << "Key Pressed: " << data.key << std::endl;
+		}
+
+		if (data.inputType == InputActionManager::InputType::Released)
+		{
+			std::cout << "Key Released: " << data.key << std::endl;
+		}
+
+		if (data.inputType == InputActionManager::InputType::Down)
+		{
+			std::cout << "Key Down: " << data.key << std::endl;
 		}
 	});
 }
@@ -192,6 +198,7 @@ int InputManager::GetRawMouseYDelta() { return rawMouseYDelta; }
 // ---------------------------------------------------------------
 float InputManager::GetMouseWheel() { return wheelDelta; }
 
+float InputManager::GetPrevMouseWheel() { return prevWheelDelta; }
 
 // ---------------------------------------------------------------
 //  Sets the mouse wheel delta for this frame.  This is called
@@ -200,9 +207,9 @@ float InputManager::GetMouseWheel() { return wheelDelta; }
 // ---------------------------------------------------------------
 void InputManager::SetWheelDelta(float delta)
 {
+	prevWheelDelta = wheelDelta;
 	wheelDelta = delta;
 }
-
 
 // ---------------------------------------------------------------
 //  Sets whether or not keyboard input is "captured" elsewhere.

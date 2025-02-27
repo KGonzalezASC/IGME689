@@ -121,6 +121,11 @@ namespace InputActionManager
 
 		XControllerLeftTrigger = 95,
 		XControllerRightTrigger = 96,
+
+		// Mouse Values
+		MouseDelta = 97,
+		MousePosition = 98,
+		MouseWheelDelta = 99
 	};
 
 	enum InputBindingType
@@ -193,7 +198,9 @@ namespace InputActionManager
 	// Checks if a key assosiated to a binding is has been iteracted with
 	void CheckActionBindings();
 	InputType ProcessKey(uint16_t key);
+	InputType ProcessKey(bool current, bool prev);
 	InputType ProcessMouse(InputBindings mouseInput);
+	std::any GetMouseValue(InputBindings mouseInput);
 
 	// ===== | Variables | =====
 	extern std::unordered_map<std::wstring, InputAction> actions;

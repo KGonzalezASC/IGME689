@@ -113,6 +113,10 @@ namespace InputActionManager
 		addMouse(MouseWheelUp, 0); // Custom code for mouse wheel up
 		addMouse(MouseWheelDown, 0); // Custom code for mouse wheel down
 
+		addMouse(MouseDelta, 0);
+		addMouse(MousePosition, 0);
+		addMouse(MouseWheelDelta, 0);
+
 		// Add controller buttons
 		addController(XControllerA, 0x1000);
 		addController(XControllerB, 0x2000);
@@ -174,9 +178,14 @@ namespace InputActionManager
 			}
 			else if (type == InputBindingType::Mouse)
 			{
-				if (input >= 74 && input <= 76)
+				if (input >= 74 && input <= 78)
 				{
-
+					inputType = ProcessMouse(input);
+				}
+				else if (input >= 97 && input <= 99)
+				{
+					inputType = InputType::Value;
+					inputValue = GetMouseValue(input);
 				}
 			}
 			else if (type == InputBindingType::XController)
@@ -257,8 +266,120 @@ namespace InputActionManager
 		return InputType::Up;
 	}
 
+	InputType InputActionManager::ProcessKey(bool current, bool prev)
+	{
+		if (current && !prev)
+			return InputType::Pressed;
+		if (!current && prev)
+			return InputType::Released;
+		if (current && prev)
+			return InputType::Down;
+		if (!current && !prev)
+			return InputType::Up;
+
+		return InputType::Up;
+	}
+
 	InputType InputActionManager::ProcessMouse(InputBindings mouseInput)
 	{
-		return InputType::Up;
+		using namespace InputManager;
+
+		bool current;
+		bool prev;
+		
+		switch (mouseInput)
+		{
+
+		case 74:
+			if (MouseLeftPress())
+				return InputType::Pressed;
+			if (MouseLeftRelease())
+				return InputType::Released;
+			if (MouseLeftDown())
+				return InputType::Down;
+			if (MouseLeftUp())
+				return InputType::Up;
+			break;
+
+		case 75:
+			if (MouseRightPress())
+				return InputType::Pressed;
+			if (MouseRightRelease())
+				return InputType::Released;
+			if (MouseRightDown())
+				return InputType::Down;
+			if (MouseRightUp())
+				return InputType::Up;
+			break;
+			
+		case 76:
+			if (MouseMiddlePress())
+				return InputType::Pressed;
+			if (MouseMiddleRelease())
+				return InputType::Released;
+			if (MouseMiddleDown())
+				return InputType::Down;
+			if (MouseMiddleUp())
+				return InputType::Up;
+			break;
+
+		case 77:
+			current = GetMouseWheel() > 0;
+			prev = GetPrevMouseWheel() > 0;
+
+			if (current && !prev)
+				return InputType::Pressed;
+			if (!current && prev)
+				return InputType::Released;
+			if (current && prev)
+				return InputType::Down;
+			if (!current && !prev)
+				return InputType::Up;
+			break;
+
+		case 78:
+			current = GetMouseWheel() < 0;
+			prev = GetPrevMouseWheel() < 0;
+
+			if (current && !prev)
+				return InputType::Pressed;
+			if (!current && prev)
+				return InputType::Released;
+			if (current && prev)
+				return InputType::Down;
+			if (!current && !prev)
+				return InputType::Up;
+			break;
+
+		default:
+			return InputType::Up;
+			break;
+		}
+		
+	}
+	std::any GetMouseValue(InputBindings mouseInput)
+	{
+		using namespace InputManager;
+
+		switch (mouseInput)
+		{
+
+		case 99:
+			return GetMouseWheel();
+			break;
+
+		case 98:
+			XMFLOAT2 position(GetMouseX(), GetMouseY());
+			return position;
+			break;
+
+		case 97:
+			XMFLOAT2 delta(GetMouseXDelta(), GetMouseYDelta());
+			return delta;
+			break;
+
+		default:
+			return std::any();
+		}
 	}
 }

@@ -22,6 +22,7 @@ namespace InputManager
 		int rawMouseXDelta = 0;
 		int rawMouseYDelta = 0;
 		float wheelDelta = 0;
+		float prevWheelDelta = 0;
 
 		// Support for capturing input outside the input manager
 		bool keyboardCaptured = false;
@@ -44,6 +45,7 @@ namespace InputManager
 	int GetRawMouseXDelta();
 	int GetRawMouseYDelta();
 	float GetMouseWheel();
+	float GetPrevMouseWheel();
 	void SetWheelDelta(float delta);
 	void SetKeyboardCapture(bool captured);
 	void SetMouseCapture(bool captured);
