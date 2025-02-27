@@ -1,5 +1,4 @@
 #include "AudioManager.h"
-using namespace Input;
 
 XAudioVoice AudioManager::voiceArr[MAX_CONCURRENT_SOUNDS];
 

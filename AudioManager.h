@@ -4,7 +4,6 @@
 #include <vector>
 #include <iostream>
 #include <string>
-#include "Input.h"
 
 #ifdef _XBOX //Big-Endian
 #define fourccRIFF 'RIFF'

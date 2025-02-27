@@ -28,8 +28,6 @@ void Game::Initialize()
 	ImGui_ImplDX11_Init(Graphics::Device.Get(), Graphics::Context11_1.Get());
 	LoadShaders();
 
-
-
 	//TODO: REPLACE WITH PBR MATERIALS (i.e remove the tint and or make accomodations for both in PS)
 	redMaterial = std::make_shared<Material>("Red Solid", pixelShader, vertexShader, XMFLOAT3(1.0f, 0.0f, 0.0f), 0.5);
 
@@ -302,7 +300,7 @@ void Game::Update(float deltaTime, float totalTime)
 	cameras[activeCamera]->Update(deltaTime);
 	updateUi(deltaTime);
 
-	if (Input::KeyPress(VK_DELETE))
+	if (InputManager::KeyPress(VK_DELETE))
 	{
 		int matLocation = rand() % materials.size();
 		
@@ -312,7 +310,7 @@ void Game::Update(float deltaTime, float totalTime)
 		bodyObjects[id] = entity.get();
 	}
 
-	if (Input::KeyPress(VK_INSERT))
+	if (InputManager::KeyPress(VK_INSERT))
 	{
 		XMFLOAT3 pos = cameras[0]->getTransform().getPosition();
 		XMFLOAT3 forward = cameras[0]->getTransform().getForward();
