@@ -27,21 +27,72 @@ void Game::Initialize()
 	ImGui_ImplWin32_Init(Window::Handle());
 	ImGui_ImplDX11_Init(Graphics::Device.Get(), Graphics::Context11_1.Get());
 	LoadShaders();
-	
-	CreateGeometry(); //updating for A03
-	// Set initial graphics API state pipeline settings
 	{
 		Graphics::Context11_1->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	}
+	CreateGeometry();
+	std::shared_ptr<Material> redMaterial = std::make_shared<Material>("Red Solid", pixelShader, vertexShader, XMFLOAT3(1.0f, 0.0f, 0.0f), 0.5);
+	materials.insert(materials.end(), { redMaterial });
+	for (auto& material : materials) {
+		material->Initialize();
+	}
+
+	//create gameobjects:
+	{
+		std::shared_ptr<GameObject> cubeObject = std::make_shared<GameObject>(meshes[0], redMaterial);
+		entities.push_back(cubeObject);
+		for (const auto& entity : entities)
+		{
+			auto vertexShader = entity->GetMaterial()->GetVertexShader();
+			shaderGroups[vertexShader].push_back(entity);
+		}
 	}
 
 	//camera basic setup //TODO: CAMERA NEEDS IMPROVED CONTROLS and bug fix so we can set proper looking at position instead of directly at mouse pos.
 	std::shared_ptr<Camera> camera = std::make_shared<Camera>(Window::AspectRatio(), XMFLOAT3(0.0f, 0.0f, -15.0f), XM_PIDIV4, 0.01f, 1000.0f, 5.0f, 0.0055f);
 	cameras.push_back(camera);
-	//other camera at diff angle
 	std::shared_ptr<Camera> camera2 = std::make_shared<Camera>(Window::AspectRatio(), XMFLOAT3(0.5f, 0.0f, -15.0f), XM_PIDIV4, 0.01f, 1000.0f, 5.0f, 0.0055f);
 	camera2.get()->getTransform().moveRelative(0.5f, 0.0f, 0.0f);
 	cameras.push_back(camera2);
+	//lights:
+	{
+		Light pointLight1 = {};
+		pointLight1.Color = XMFLOAT3(1, 1, 1);
+		pointLight1.Type = LIGHT_TYPE_POINT;
+		pointLight1.Intensity = 1.0f;
+		pointLight1.Position = XMFLOAT3(-1.5f, 0, 0);
+		pointLight1.Range = 10.0f;
 
+		Light pointLight2 = {};
+		pointLight2.Color = XMFLOAT3(1, 1, 1);
+		pointLight2.Type = LIGHT_TYPE_POINT;
+		pointLight2.Intensity = 0.5f;
+		pointLight2.Position = XMFLOAT3(1.5f, 0, 0);
+		pointLight2.Range = 10.0f;
+
+		Light spotLight1 = {};
+		spotLight1.Color = XMFLOAT3(1, 1, 1);
+		spotLight1.Type = LIGHT_TYPE_SPOT;
+		spotLight1.Intensity = 2.0f;
+		spotLight1.Position = XMFLOAT3(6.0f, 1.5f, 0);
+		spotLight1.Direction = XMFLOAT3(0, -1, 0);
+		spotLight1.Range = 10.0f;
+		spotLight1.SpotOuterAngle = XMConvertToRadians(30.0f);
+		spotLight1.SpotInnerAngle = XMConvertToRadians(20.0f);
+
+		lights.push_back(pointLight1);
+		lights.push_back(pointLight2);
+		lights.push_back(spotLight1);
+
+		//normalize directions of all non-point lights
+		for (int i = 0; i < lights.size(); i++)
+			if (lights[i].Type != LIGHT_TYPE_POINT)
+				XMStoreFloat3(
+					&lights[i].Direction,
+					XMVector3Normalize(XMLoadFloat3(&lights[i].Direction))
+				);
+	}
+	//audio
 	audioManager = std::make_shared<AudioManager>();
 }
 
@@ -81,63 +132,18 @@ void Game::CreateGeometry()
 	std::shared_ptr<Mesh> cube = std::make_shared<Mesh>("cube", FixPath(L"../../Assets/Models/cube.obj").c_str());
 	meshes.push_back(cube);
 
-	// Create a material for the mesh
-	std::shared_ptr<Material> redMaterial = std::make_shared<Material>("Red Solid", pixelShader, vertexShader, XMFLOAT3(1.0f, 0.0f, 0.0f), 0.5);
-	materials.push_back(redMaterial);
-
-	// Create a single GameObject for the mesh
-	std::shared_ptr<GameObject> cubeObject = std::make_shared<GameObject>(cube, redMaterial);
-	entities.push_back(cubeObject);
-
 	// Create instance data 
-	std::vector<InstanceData> instanceData;
-	for (int i = 0; i < NUM_INSTANCES; i++)
-	{
-		InstanceData data;
-		// Set up the world matrix for each instance
-		XMStoreFloat4x4(&data.world, XMMatrixTranslation(i * 4.0f, 0.0f, 0.0f));
-		instanceData.push_back(data);
-	}
+	//std::vector<InstanceData> instanceData;
+	//for (int i = 0; i < NUM_INSTANCES; i++)
+	//{
+	//	InstanceData data;
+	//	// Set up the world matrix for each instance
+	//	XMStoreFloat4x4(&data.world, XMMatrixTranslation(i * 4.0f, 0.0f, 0.0f));
+	//	instanceData.push_back(data);
+	//}
 
-	// Update the instance buffer with the instance data
-	Graphics::UpdateInstanceBuffer(instanceData);
-
-	//lighting
-	Light pointLight1 = {};
-	pointLight1.Color = XMFLOAT3(1, 1, 1);
-	pointLight1.Type = LIGHT_TYPE_POINT;
-	pointLight1.Intensity = 1.0f;
-	pointLight1.Position = XMFLOAT3(-1.5f, 0, 0);
-	pointLight1.Range = 10.0f;
-
-	Light pointLight2 = {};
-	pointLight2.Color = XMFLOAT3(1, 1, 1);
-	pointLight2.Type = LIGHT_TYPE_POINT;
-	pointLight2.Intensity = 0.5f;
-	pointLight2.Position = XMFLOAT3(1.5f, 0, 0);
-	pointLight2.Range = 10.0f;
-
-	Light spotLight1 = {};
-	spotLight1.Color = XMFLOAT3(1, 1, 1);
-	spotLight1.Type = LIGHT_TYPE_SPOT;
-	spotLight1.Intensity = 2.0f;
-	spotLight1.Position = XMFLOAT3(6.0f, 1.5f, 0);
-	spotLight1.Direction = XMFLOAT3(0, -1, 0);
-	spotLight1.Range = 10.0f;
-	spotLight1.SpotOuterAngle = XMConvertToRadians(30.0f);
-	spotLight1.SpotInnerAngle = XMConvertToRadians(20.0f);
-
-	lights.push_back(pointLight1);
-	lights.push_back(pointLight2);
-	lights.push_back(spotLight1);
-
-	//normalize directions of all non-point lights
-	for (int i = 0; i < lights.size(); i++)
-		if (lights[i].Type != LIGHT_TYPE_POINT)
-			XMStoreFloat3(
-				&lights[i].Direction,
-				XMVector3Normalize(XMLoadFloat3(&lights[i].Direction))
-			);
+	//// Update the instance buffer with the instance data
+	//Graphics::UpdateInstanceBuffer(instanceData);
 }
 
 

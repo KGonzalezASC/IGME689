@@ -76,6 +76,8 @@ public:
 
 	// Simple helpers
 	bool IsShaderValid() { return shaderValid; }
+	std::string GetShaderName() const { return shaderName; }
+
 
 	// Activating the shader and copying data
 	void SetShader();
@@ -171,6 +173,8 @@ protected:
 	void LogErrorW(std::wstring message);
 	void LogWarning(std::string message);
 	void LogWarningW(std::wstring message);
+
+	std::string shaderName;
 };
 
 // --------------------------------------------------------

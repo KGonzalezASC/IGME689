@@ -8,47 +8,45 @@
 #include "SimpleShader/SimpleShader.h"
 #include <d3d11_1.h>
 
-class Material
+//enabled_shared_from_this is a base class
+//that enables objects of derived classes to be shared pointers
+//and to be shared from a member function
+//which allows for registering materials with shaders because
+//the shared ptrs are not initialized in the ctor
+//and we need to register the material with the shader
+//to optimize per frame data
+class Material : public std::enable_shared_from_this<Material>
 {
 public:
-	Material(const char* name, std::shared_ptr<SimplePixelShader> ps, std::shared_ptr<SimpleVertexShader> vs, DirectX::XMFLOAT3 tint, float rough);
+	Material(const char* name, std::shared_ptr<SimplePixelShader> ps, std::shared_ptr<ISimpleShader> vs, DirectX::XMFLOAT3 tint, float rough);
 	~Material();
-
-	//gets and setters
-	//Although multiple materials may use the same vertex and pixel shader code(i.e., the same compiled shader files),
-	//each material typically has its own instance of the vertex and pixel shaders.T
-	//This allows the shaders to be applied with different parameter 
-	//values for each material instance.
-	//for any material using the same shader code, (which for now is all)
-	//the shaders is just the same instance of the shader code being called with different params
-	//on the gpu meaning that compiled instance is being reused in memory on the gpu
+	void Initialize(); // to prevent weak ptrs as the shared ptrs are not initialized in the ctor
 	std::shared_ptr<SimplePixelShader> GetPixelShader();
-	std::shared_ptr<SimpleVertexShader> GetVertexShader();
-	DirectX::XMFLOAT3 GetColorTint();
+	std::shared_ptr<ISimpleShader> GetVertexShader();
+	DirectX::XMFLOAT3 GetColorTint() const;
 	const char* GetName();
 
 	void SetPixelShader(std::shared_ptr<SimplePixelShader>);
-	void SetVertexShader(std::shared_ptr<SimpleVertexShader>);
+	void SetVertexShader(std::shared_ptr<ISimpleShader>);
 	void SetColorTint(DirectX::XMFLOAT3 color);
 	void SetRoughness(float rough);
 
+	//render loop related code:
+	static std::unordered_map<std::shared_ptr<ISimpleShader>, std::vector<std::shared_ptr<Material>>> sharedVertexShaders; //collection of materials grouped by shader
+
+
+
 	void PrepareMaterial(std::shared_ptr<Transform> transform, std::shared_ptr<Camera> camera);
 
-
-	/*	
-	• A 4 - component color tint
-	• A SimpleVertexShader
-	• A SimplePixelShader
-	*/
-
 private:
-	//simple shader does not use comptr or com objects
-	DirectX::XMFLOAT3 colorTint;
-	std::shared_ptr<SimpleVertexShader> vertexShader;
+	std::shared_ptr<ISimpleShader> vertexShader;
 	std::shared_ptr<SimplePixelShader> pixelShader;
+	void RegisterMaterialWithShader(); //registers this material with the shader
+
 
 	float roughness;
 	const char* name;
+	DirectX::XMFLOAT3 colorTint;
 };
 
 
