@@ -1,5 +1,6 @@
 #pragma once
 #include <xaudio2.h>
+#include <x3daudio.h>
 #include <memory>
 #include <vector>
 #include <iostream>
@@ -138,11 +139,34 @@ public:
 };
 
 // XAudioVoice struct
+// TODO: Whenever some kind of GameObject is made, allow them to use their own
+// XAudioVoice for playing positional audio.
 struct XAudioVoice : IXAudio2VoiceCallback
 {
 public:
 	bool playing = false;
+	bool isPositional = false;
 	IXAudio2SourceVoice* voice;
+
+	X3DAUDIO_EMITTER* GetEmitter()
+	{
+		return &emitter;
+	}
+
+	void Init3DEmitter()
+	{
+		emitter.ChannelCount = 1; // If problems show up, up the channel count to 2
+		emitter.CurveDistanceScaler = emitter.DopplerScaler = 1.0f;
+	}
+
+	void UpdateEmitter(X3DAUDIO_VECTOR front, X3DAUDIO_VECTOR up, X3DAUDIO_VECTOR pos,
+		X3DAUDIO_VECTOR vel)
+	{
+		emitter.OrientFront = front;
+		emitter.OrientTop = up;
+		emitter.Position = pos;
+		emitter.Velocity = vel;
+	}
 
 	void OnStreamEnd() noexcept
 	{
@@ -154,7 +178,6 @@ public:
 	void OnBufferStart(void* pBufferContext) noexcept 
 	{
 		((Sound*)pBufferContext)->numOfPlayingVoices++;
-		//std::cout << ((Sound*)pBufferContext)->numOfPlayingVoices << std::endl;
 	}
 
 	// When the buffer ends, increment the amount of voices playing this sound.
@@ -176,6 +199,8 @@ public:
 	void OnVoiceProcessingPassStart(UINT32 SamplesRequired) noexcept {}
 	void OnLoopEnd(void* pBufferContext) noexcept {}
 	void OnVoiceError(void* pBufferContext, HRESULT error) noexcept {}
+private:
+	X3DAUDIO_EMITTER emitter = {};
 };
 
 class AudioManager
@@ -187,11 +212,16 @@ public:
 	Sound* create_sound(const char filePath[MAX_SOUND_PATH_LENGTH]);
 	void cache_sound(Sound* sound);
 	void update_audio(float dt);
+	void UpdateListener(X3DAUDIO_VECTOR front, X3DAUDIO_VECTOR up, X3DAUDIO_VECTOR pos,
+		X3DAUDIO_VECTOR vel);
 
 private:
 	static XAudioVoice voiceArr[MAX_CONCURRENT_SOUNDS];
 	Sound* cachedSounds[MAX_CACHED_SOUNDS];
 	IXAudio2* xAudio2;
+	X3DAUDIO_HANDLE X3DInstance;
+	X3DAUDIO_DSP_SETTINGS DSPSettings;
+	X3DAUDIO_LISTENER mainListener;
 	bool init();
 	HRESULT FindChunk(HANDLE hFile, DWORD fourcc, DWORD& dwChunkSize, DWORD& dwChunkDataPosition);
 	HRESULT ReadChunkData(HANDLE hFile, void* buffer, DWORD buffersize, DWORD bufferoffset);
