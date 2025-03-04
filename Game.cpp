@@ -15,6 +15,11 @@
 // For the DirectX Math library
 using namespace DirectX;
 
+// Function to be called by the delegate
+void CollisionCallback(AudioManager* audioManager) {
+	audioManager->playSound("Sounds/vine-boom.wav");
+}
+
 // --------------------------------------------------------
 // Called once per program, after the window and graphics API
 // are initialized but before the game loop begins
@@ -51,7 +56,8 @@ void Game::Initialize()
 	physicsManager->AddBodyVelocity(sphere1, Vec3(0.0f, -5.0f, 0.0f));
 	sphere2 = physicsManager->CreatePhysicsSphereBody(RVec3(0.1_r, 0.0_r, 0.1_r),1);
 
-	
+	physicsManager->contact_listener.collisionDelegate = CollisionCallback;
+
 	CreateGeometry(); //updating for A03
 	// Set initial graphics API state pipeline settings
 	{

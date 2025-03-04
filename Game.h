@@ -46,7 +46,6 @@ private:
 	void CreateGeometry();
 	void updateUi(float deltaTime);
 
-
 	std::vector<std::shared_ptr<Camera>> cameras;
 	int activeCamera = 0;
 

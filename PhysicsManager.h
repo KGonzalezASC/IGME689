@@ -33,6 +33,8 @@
 #include <thread>
 #include <unordered_map>
 
+#include "AudioManager.h"
+
 // Disable common warnings triggered by Jolt, you can use JPH_SUPPRESS_WARNING_PUSH / JPH_SUPPRESS_WARNING_POP to store and restore the warning state
 JPH_SUPPRESS_WARNINGS;
 
@@ -173,31 +175,37 @@ public:
 		}
 	}
 };
+#pragma endregion
 
 // An example contact listener
 class MyContactListener : public ContactListener
 {
+	AudioManager* audioManager;
+
 public:
+	function<void(AudioManager* audioManager)> collisionDelegate;
+
 	// See: ContactListener
 	virtual ValidateResult	OnContactValidate(const Body& inBody1, const Body& inBody2, RVec3Arg inBaseOffset, const CollideShapeResult& inCollisionResult) override
 	{
-		cout << "Contact validate callback" << endl;
+		//cout << "Contact validate callback" << endl;
 
 		// Allows you to ignore a contact before it is created (using layers to not make objects collide is cheaper!)
 		return ValidateResult::AcceptAllContactsForThisBodyPair;
 	}
 
-	virtual void			OnContactAdded(const Body& inBody1, const Body& inBody2, const ContactManifold& inManifold, ContactSettings& ioSettings) override
+	virtual void OnContactAdded(const Body& inBody1, const Body& inBody2, const ContactManifold& inManifold, ContactSettings& ioSettings) override
 	{
+		collisionDelegate(audioManager);
 		cout << "A contact was added" << endl;
 	}
 
-	virtual void			OnContactPersisted(const Body& inBody1, const Body& inBody2, const ContactManifold& inManifold, ContactSettings& ioSettings) override
+	virtual void OnContactPersisted(const Body& inBody1, const Body& inBody2, const ContactManifold& inManifold, ContactSettings& ioSettings) override
 	{
-		cout << "A contact was persisted" << endl;
+		//cout << "A contact was persisted" << endl;
 	}
 
-	virtual void			OnContactRemoved(const SubShapeIDPair& inSubShapePair) override
+	virtual void OnContactRemoved(const SubShapeIDPair& inSubShapePair) override
 	{
 		cout << "A contact was removed" << endl;
 	}
@@ -217,7 +225,7 @@ public:
 		cout << "A body went to sleep" << endl;
 	}
 };
-#pragma endregion
+
 
 class PhysicsManager
 {
@@ -234,6 +242,8 @@ public:
 	AllHitCollisionCollector<CollideShapeBodyCollector> JoltShapeCast(Vec3Arg min, Vec3Arg max, Vec3Arg direction);
 
 	BodyInterface* body_interface;
+	MyContactListener contact_listener;
+
 private:
 	//-------------JoltPhysics-------------------
 
