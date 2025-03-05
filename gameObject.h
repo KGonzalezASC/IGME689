@@ -20,7 +20,7 @@ class GameObject
 
 	 void SetMaterial(std::shared_ptr<Material> material);
 	 void SetMesh(std::shared_ptr<Mesh> mesh);
-	 void Draw(std::shared_ptr<Camera> camera);
+	 void Draw(std::shared_ptr<Camera> camera, UINT objectIndex);
 	 void DrawInstanced(std::shared_ptr<Camera> camera, int instanceCount);
 
    private:

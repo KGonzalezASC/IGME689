@@ -63,13 +63,14 @@ void Material::SetRoughness(float rough)
     roughness = rough;
 }
 
-
+#pragma region SortingMethods
 
 void Material::Initialize()
 {
     //adds material to sharedVertexShader map to sort for a perFrameData optimization
     RegisterMaterialWithShader();
 }
+
 
 void Material::RegisterMaterialWithShader()
 {
@@ -89,26 +90,46 @@ void Material::RegisterMaterialWithShader()
         << sharedVertexShaders[vertexShader].size() << std::endl;
 }
 
+bool Material::CheckAndSetPerObjectData(UINT objectIndex)
+{
+    auto it = perObjectDataProcessed.find(objectIndex);
+    if (it != perObjectDataProcessed.end() && it-> second)
+    {
+	    //Per-object data has already been set for this object
+        return false;
+    }
+    //Mark the object as processed:
+    perObjectDataProcessed[objectIndex] = true;
+    return true;
+}
 
+
+#pragma endregion SortingMethods
 
 
 //LIKELY THIS AND SIMPLE SHADER NEEDS A REWRITE
 void Material::PrepareMaterial(std::shared_ptr<Transform> transform, std::shared_ptr<Camera> camera)
 {
-    // 'Turn on' these shaders
-    vertexShader->SetShader();
+	//vertexShader->SetShader(); //shader is turned on in UpdatePerFrameData
     pixelShader->SetShader();
 
     vertexShader->SetMatrix4x4("world", transform->getWorldMatrix());
     vertexShader->SetMatrix4x4("worldInvTrans", transform->getWorldInverseTransposeMatrix());
 
-    // View and projection matrices are likely per-frame and always need to be set
-    vertexShader->SetMatrix4x4("view", camera->getViewMatrix());
-    vertexShader->SetMatrix4x4("projection", camera->getProjectionMatrix());
-    vertexShader->CopyAllBufferData();
+    vertexShader->CopyBufferData("PerObjectData");
 
     // Pixel shader settings
     pixelShader->SetFloat3("colorTint", colorTint);
     pixelShader->CopyAllBufferData();
 }
 
+void Material::UpdatePerFrameData(std::shared_ptr<Camera> camera)
+{
+    //writing to both shaders at once but avoid overwriting, means each shader uses its own constant buffer instance one time per frame and use by all materials using that shader
+	for (auto& shaderGroup : sharedVertexShaders)
+	{
+		shaderGroup.first->SetMatrix4x4("view", camera->getViewMatrix());
+		shaderGroup.first->SetMatrix4x4("projection", camera->getProjectionMatrix());
+		shaderGroup.first->CopyBufferData("PerFrameData");
+	}
+}

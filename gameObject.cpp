@@ -26,7 +26,7 @@ void GameObject::SetMaterial(std::shared_ptr<Material> material)
 	this->material = material;
 }
 
-void GameObject::Draw(std::shared_ptr<Camera> camera)
+void GameObject::Draw(std::shared_ptr<Camera> camera, UINT ObjectIndex)
 {
 	material->PrepareMaterial(transform, camera);
 	mesh->Draw();

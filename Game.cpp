@@ -58,10 +58,10 @@ void Game::Initialize()
 	{
 		Light pointLight1 = {};
 		pointLight1.Color = XMFLOAT3(1, 1, 1);
-		pointLight1.Type = LIGHT_TYPE_POINT;
-		pointLight1.Intensity = 1.0f;
+		pointLight1.Type = LIGHT_TYPE_DIRECTIONAL;
+		pointLight1.Intensity =2.0f;
 		pointLight1.Position = XMFLOAT3(-1.5f, 0, 0);
-		pointLight1.Range = 10.0f;
+		pointLight1.Range = 20.0f;
 
 		Light pointLight2 = {};
 		pointLight2.Color = XMFLOAT3(1, 1, 1);
@@ -291,15 +291,22 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	//then drawing
 
-	// Draw each GameObject with instancing
-	for (auto& entity : entities)
+
+	Material::UpdatePerFrameData(cameras[activeCamera]);
+	// sort by each group of entities with the same vertex shader
+	for (const auto& [shader, shared_entities] : shaderGroups)
 	{
-		std::shared_ptr<SimplePixelShader> pixelShader = entity->GetMaterial()->GetPixelShader();
-		pixelShader->SetFloat3("ambientColor", ambientColor);
-		pixelShader->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
-		//entity->DrawInstanced(cameras[activeCamera], NUM_INSTANCES);
-		entity->Draw(cameras[activeCamera]);
+		shader->SetShader(); //sets Vertex Shaderv
+
+		for (unsigned int i = 0; i < shared_entities.size(); ++i)
+		{
+			pixelShader->SetFloat3("ambientColor", ambientColor);
+			pixelShader->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
+			shared_entities[i]->Draw(cameras[activeCamera], i); // Pass the object index
+		}
 	}
+
+
 
 	//draw ui we have to do this after drawing everything else to ensure sorting
 	{

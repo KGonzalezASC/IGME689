@@ -33,7 +33,11 @@ public:
 
 	//render loop related code:
 	static std::unordered_map<std::shared_ptr<ISimpleShader>, std::vector<std::shared_ptr<Material>>> sharedVertexShaders; //collection of materials grouped by shader
-
+	std::unordered_map<unsigned int, bool> perObjectDataProcessed; //i need another unordered map as a material can be shared by multiple objects i need a key and way to track if their "first pass" has been set
+	//marks as dirty for drawFrame
+	bool CheckAndSetPerObjectData(unsigned int objectIndex);
+	//updates only perFrameData per shader group:
+	static void UpdatePerFrameData(std::shared_ptr<Camera> camera);
 
 
 	void PrepareMaterial(std::shared_ptr<Transform> transform, std::shared_ptr<Camera> camera);
