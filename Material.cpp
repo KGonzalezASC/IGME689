@@ -107,7 +107,11 @@ bool Material::CheckAndSetPerObjectData(UINT objectIndex)
 #pragma endregion SortingMethods
 
 
-//LIKELY THIS AND SIMPLE SHADER NEEDS A REWRITE
+
+
+#pragma region RenderMethods
+
+//Can not use dirty checks
 void Material::PrepareMaterial(std::shared_ptr<Transform> transform, std::shared_ptr<Camera> camera)
 {
 	//vertexShader->SetShader(); //shader is turned on in UpdatePerFrameData
@@ -123,6 +127,36 @@ void Material::PrepareMaterial(std::shared_ptr<Transform> transform, std::shared
     pixelShader->CopyAllBufferData();
 }
 
+//Can use dirty checks
+void Material::PrepareLesserMaterial(const std::shared_ptr<Transform>& transform, std::shared_ptr<Camera> camera, unsigned int objectIndex)
+{
+    pixelShader->SetShader();
+    auto vertexShader = std::static_pointer_cast<LessSimpleVertexShader>(this->vertexShader);
+    if (transform->isDirty())//if it updates we have to unset it
+    {
+        perObjectDataProcessed[objectIndex] = false;
+    }
+    bool mappedValueIsDirty = CheckAndSetPerObjectData(objectIndex);
+
+    // Only update if this object’s data has changed
+    if (mappedValueIsDirty) //marks it as clean
+    {
+        DirectX::XMFLOAT4X4 matrices[2] = {
+            transform->getWorldMatrix(),
+            transform->getWorldInverseTransposeMatrix()
+        };
+        vertexShader->WFillPerObjectDataBuffer(objectIndex, matrices);
+    }
+
+    // Bind the data (copy if needed, always bind)
+    vertexShader->CopyPerObjectData(objectIndex, mappedValueIsDirty);
+    //if not it uses the previous frame's data which is incorrect memory
+    pixelShader->SetFloat3("colorTint", colorTint);
+    pixelShader->CopyAllBufferData();
+}
+
+
+
 void Material::UpdatePerFrameData(std::shared_ptr<Camera> camera)
 {
     //writing to both shaders at once but avoid overwriting, means each shader uses its own constant buffer instance one time per frame and use by all materials using that shader
@@ -133,3 +167,5 @@ void Material::UpdatePerFrameData(std::shared_ptr<Camera> camera)
 		shaderGroup.first->CopyBufferData("PerFrameData");
 	}
 }
+
+#pragma endregion RenderMethods   

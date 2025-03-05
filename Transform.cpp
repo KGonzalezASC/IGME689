@@ -97,7 +97,10 @@ XMFLOAT3 Transform::getUp()
 	return up;
 }
 
-
+bool Transform::isDirty()
+{
+	return shouldUpdateWorldMatrix; //indicates if world matrix needs to be updated
+}
 
 //P
 XMFLOAT3 Transform::getPosition()
@@ -206,13 +209,6 @@ void Transform::Scale(XMFLOAT3 scale)
 }
 
 
-//world matrix
-
-//is dirty
-bool Transform::isDirtyWorld()
-{
-	return shouldUpdateWorldMatrix;
-}
 
 XMFLOAT4X4 Transform::getWorldMatrix()
 {

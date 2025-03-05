@@ -41,6 +41,7 @@ public:
 
 
 	void PrepareMaterial(std::shared_ptr<Transform> transform, std::shared_ptr<Camera> camera);
+	void PrepareLesserMaterial(const std::shared_ptr<Transform>& transform, std::shared_ptr<Camera> camera, unsigned int objectIndex);
 
 private:
 	std::shared_ptr<ISimpleShader> vertexShader;

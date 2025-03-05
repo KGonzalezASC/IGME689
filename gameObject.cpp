@@ -28,7 +28,14 @@ void GameObject::SetMaterial(std::shared_ptr<Material> material)
 
 void GameObject::Draw(std::shared_ptr<Camera> camera, UINT ObjectIndex)
 {
-	material->PrepareMaterial(transform, camera);
+	if (auto lessSimpleVertexShader = std::dynamic_pointer_cast<LessSimpleVertexShader>(material->GetVertexShader()))
+	{
+		material->PrepareLesserMaterial(transform, camera, ObjectIndex);
+	}
+	else
+	{
+		material->PrepareMaterial(transform, camera);
+	}
 	mesh->Draw();
 }
 
